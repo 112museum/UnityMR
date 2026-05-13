@@ -1,0 +1,6 @@
+{
+    "npcs": [
+        { "configFileName": "qianlong.json" },
+        { "configFileName": "huizong.json" }
+    ]
+}

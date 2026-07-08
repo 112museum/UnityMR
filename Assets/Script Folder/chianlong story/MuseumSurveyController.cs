@@ -17,6 +17,7 @@ public class MuseumSurveyController : MonoBehaviour
     // 儲存目前選中的秒數
     private int currentSelectedSeconds = -1; // -1 代表尚未選擇
     public static int selectedSeconds;
+    public YMEyeTrackLog eyeTrackLog;
 
     void Start()
     {
@@ -60,7 +61,7 @@ public class MuseumSurveyController : MonoBehaviour
             confirmButton.SetActive(true);
         }
         
-        Debug.Log($"貓貓點擊了：{seconds} 秒");
+        Debug.Log($"點擊了：{seconds} 秒");
     }
 
     // 更新顯示文字，將底線替換成數字
@@ -91,6 +92,7 @@ public class MuseumSurveyController : MonoBehaviour
         // 顯示最終感謝詞
         if (finalMessageText != null)
         {
+            eyeTrackLog.StopLogging(selectedSeconds);
             finalMessageText.text = "謝謝您的配合！請您馬上前往入口區通知實驗工作人員並暫時歸還裝置！";
             finalMessageText.gameObject.SetActive(true);
         }

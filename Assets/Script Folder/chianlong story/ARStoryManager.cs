@@ -22,6 +22,7 @@ public class ARStoryManager : MonoBehaviour
     public Animation bottleAnimation;
     public Animation bowlAnimation;
     public ARUIController triggerButton;
+    public YMEyeTrackLog eyeTrackLog;
     // public FloatingPickupItem item;
     // private bool allowLookBowlSuccessOnly = false;
     // private bool allowGazeBowlSuccessOnly = false;
@@ -205,6 +206,8 @@ public class ARStoryManager : MonoBehaviour
     {
         Debug.Log("Player Press Start Button");
         // SubtitleDisplayManager.Instance.HideHint();
+        eyeTrackLog.StartNewUserWithCurrentTime();
+        
 
         // 確保乾隆(talker)先出現
         if (npc != null)
@@ -396,22 +399,24 @@ public class ARStoryManager : MonoBehaviour
         currentState = StoryState.WaitBowlBack;
         eventLocked = false;
         // 等待trigger：玩家把溫碗點按鈕結束體驗
-        triggerButton.EndExperienceButtonActive();
-        yield return new WaitForSeconds(30f); // 等待30秒
+        triggerButton.EndExperienceButtonActive(true);
+        yield return new WaitForSeconds(20f); // 等待30秒
         if (currentState == StoryState.WaitBowlBack) // 如果玩家完全沒反應就直接結束劇情
         {
-            SubtitleDisplayManager.Instance.HideHint();
+            triggerButton.EndExperienceButtonActive(false);
             StartCoroutine(StoryEnding());
         }
     }
     public IEnumerator StoryEnding()
     {
+        SubtitleDisplayManager.Instance.HideHint();
+        
         eventLocked = true;
         currentState = StoryState.NPCTalking;
         SubtitleDisplayManager.Instance.HideHint();
         // SubtitleDisplayManager.Instance.DisplayStory("story7-2");
-        yield return npc.SpeakCoroutine("stories", "story7-2");
-        SubtitleDisplayManager.Instance.HideSubtitle();
+        // yield return npc.SpeakCoroutine("stories", "story7-2");
+        // SubtitleDisplayManager.Instance.HideSubtitle();
 
         // 直接結束劇情並關閉乾隆場景
         currentState = StoryState.Finish;
@@ -502,7 +507,7 @@ public class ARStoryManager : MonoBehaviour
 
         // 顯示劇情與提示
         SubtitleDisplayManager.Instance.HideHint();
-        SubtitleDisplayManager.Instance.DisplayTask("task2_success_AR");
+        // SubtitleDisplayManager.Instance.DisplayTask("task2_success_AR");
 
         // 播放 NPC 台詞並等待完成
         yield return npc.SpeakCoroutine("tasks", "task2_success_AR");

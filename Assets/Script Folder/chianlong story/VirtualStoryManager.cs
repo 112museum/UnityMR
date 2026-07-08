@@ -334,7 +334,7 @@ public class VirtualStoryManager : MonoBehaviour
         wineAnimationTester.TriggerBottleToHand();
         yield return new WaitForSeconds(1f);
         animator.SetTrigger("drinking4-3");
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(3f);
         bottle.SetActive(false);
 
         // 到第五階段
@@ -410,10 +410,11 @@ public class VirtualStoryManager : MonoBehaviour
         currentState = StoryState.WaitBowlBack;
         eventLocked = false;
         // 等待trigger：玩家把溫碗點按鈕結束體驗
-        triggerButton.EndExperienceButtonActive();
-        yield return new WaitForSeconds(30f); // 等待30秒
+        triggerButton.EndExperienceButtonActive(true);
+        yield return new WaitForSeconds(20f); // 等待30秒
         if (currentState == StoryState.WaitBowlBack) // 如果玩家完全沒反應就直接結束劇情
         {
+            triggerButton.EndExperienceButtonActive(false);
             StartCoroutine(StoryEnding());
         }
     }
@@ -423,8 +424,8 @@ public class VirtualStoryManager : MonoBehaviour
         currentState = StoryState.NPCTalking;
         SubtitleDisplayManager.Instance.HideHint();
         // SubtitleDisplayManager.Instance.DisplayStory("story7-2");
-        yield return npc.SpeakCoroutine("stories", "story7-2");
-        SubtitleDisplayManager.Instance.HideSubtitle();
+        // yield return npc.SpeakCoroutine("stories", "story7-2");
+        // SubtitleDisplayManager.Instance.HideSubtitle();
 
         // 直接結束劇情並關閉乾隆場景
         currentState = StoryState.Finish;
@@ -480,7 +481,7 @@ public class VirtualStoryManager : MonoBehaviour
         eventLocked = true;
         currentState = StoryState.NPCTalking;
 
-        SubtitleDisplayManager.Instance.DisplayTask("task2_fail_Virtual");
+        // SubtitleDisplayManager.Instance.DisplayTask("task2_fail_Virtual");
         yield return npc.SpeakCoroutine("tasks", "task2_fail_Virtual");
 
         // 隱藏 Task 面板
@@ -497,7 +498,7 @@ public class VirtualStoryManager : MonoBehaviour
         currentState = StoryState.NPCTalking;
         theBowl.SwitchToState(ZeroGravityObject.ObjectState.Floating_Locked);
 
-        SubtitleDisplayManager.Instance.DisplayTask("task2_overtime");
+        // SubtitleDisplayManager.Instance.DisplayTask("task2_overtime");
         // animator.SetTrigger("指向虛擬溫碗");
         animator.SetTrigger("point fake_F");
 
@@ -521,7 +522,7 @@ public class VirtualStoryManager : MonoBehaviour
 
         // 顯示劇情與提示
         SubtitleDisplayManager.Instance.HideHint();
-        SubtitleDisplayManager.Instance.DisplayTask("task2_success");        
+        // SubtitleDisplayManager.Instance.DisplayTask("task2_success");        
         animator.SetTrigger("point fake_S");
 
         // 播放 NPC 台詞並等待完成

@@ -11,11 +11,14 @@ TagManager:
   - AOI_Exhibit
   - VirtualItem
   - Table
+  - AOI_VirtualScene
+  - AOI_PhysicalExhibits
+  - AOI_Poster
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - EyeGazeTarget
   - Water
   - UI
   - Table

@@ -118,12 +118,12 @@ public class StoryManager : MonoBehaviour
                 {
                     case EventType.EnterStoryZone:
                         eventLocked = true;
-                        StartCoroutine(DelayedStartIntro());
+                        // StartCoroutine(DelayedStartIntro());
 
                         // 各種測試
                         // StartCoroutine(BowlAppreciate());
                         // StartCoroutine(Phase8Survey());
-                        //StartCoroutine(GoToPlaceBowlSequence());
+                        StartCoroutine(GoToPlaceBowlSequence());
                         // StartCoroutine(TestAnimation());
                         break;
                 }
@@ -372,6 +372,7 @@ public class StoryManager : MonoBehaviour
         animator.SetTrigger("drinking4-3");
         Debug.Log("乾隆喝酒");
 
+        yield return new WaitForSeconds(4f);
         item.HideItem();
         // 到第五階段
         StartCoroutine(BowlAppreciate());
@@ -465,8 +466,7 @@ public class StoryManager : MonoBehaviour
         // bowlScript.DetachAndFloat();
         // theBowl.SwitchToState(ZeroGravityObject.ObjectState.Floating_Grabable);
 
-        yield return new WaitForSeconds(30f); // 等待30秒
-        SubtitleDisplayManager.Instance.HideHint();
+        yield return new WaitForSeconds(20f); // 等待30秒
         if (currentState == StoryState.WaitBowlBack) // 如果玩家完全沒反應就直接結束劇情
         {
             StartCoroutine(StoryEnding());
@@ -474,12 +474,14 @@ public class StoryManager : MonoBehaviour
     }
     public IEnumerator StoryEnding()
     {
+        SubtitleDisplayManager.Instance.HideHint();
+
         theBowl.SwitchToState(ZeroGravityObject.ObjectState.AttachedToTable, putBowlTable);
         eventLocked = true;
         currentState = StoryState.NPCTalking;
         // SubtitleDisplayManager.Instance.DisplayStory("story7-2");
-        yield return npc.SpeakCoroutine("stories", "story7-2");
-        SubtitleDisplayManager.Instance.HideSubtitle();
+        // yield return npc.SpeakCoroutine("stories", "story7-2");
+        // SubtitleDisplayManager.Instance.HideSubtitle();
 
         // 直接結束劇情並關閉乾隆場景
         currentState = StoryState.Finish;
@@ -538,7 +540,7 @@ public class StoryManager : MonoBehaviour
         // eventLocked = false;
         isPlaying = true;
 
-        SubtitleDisplayManager.Instance.DisplayTask("task2_fail");
+        // SubtitleDisplayManager.Instance.DisplayTask("task2_fail");
         yield return npc.SpeakCoroutine("tasks", "task2_fail");
 
         // 隱藏 Task 面板
@@ -553,7 +555,7 @@ public class StoryManager : MonoBehaviour
         currentState = StoryState.NPCTalking;
 
         theBowl.SwitchToState(ZeroGravityObject.ObjectState.AttachedToTable, putBowlTable);
-        SubtitleDisplayManager.Instance.DisplayTask("task2_overtime");
+        // SubtitleDisplayManager.Instance.DisplayTask("task2_overtime");
         animator.SetTrigger("task 2 overtime");
         // 播放 NPC 台詞並等待完成
         yield return npc.SpeakCoroutine("tasks", "task2_overtime");
@@ -577,7 +579,7 @@ public class StoryManager : MonoBehaviour
         // 顯示劇情與提示
         theBowl.SwitchToState(ZeroGravityObject.ObjectState.Floating_Locked);
         theBowl.SwitchToState(ZeroGravityObject.ObjectState.AttachedToTable, putBowlTable);
-        SubtitleDisplayManager.Instance.DisplayTask("task2_success");
+        // SubtitleDisplayManager.Instance.DisplayTask("task2_success");
         animator.SetTrigger("task 2 success");
 
         // 播放 NPC 台詞並等待完成
@@ -600,7 +602,7 @@ public class StoryManager : MonoBehaviour
         // eventLocked = false;
         currentState = StoryState.NPCTalking;
 
-        SubtitleDisplayManager.Instance.DisplayTask("task3_fail");
+        // SubtitleDisplayManager.Instance.DisplayTask("task3_fail");
         yield return npc.SpeakCoroutine("tasks", "task3_fail");
 
         // 隱藏 Task 面板
@@ -641,7 +643,7 @@ public class StoryManager : MonoBehaviour
     private IEnumerator GazeLongerCoroutine()
     {
         currentState = StoryState.NPCTalking;
-        SubtitleDisplayManager.Instance.DisplayTask("task5_fail");
+        // SubtitleDisplayManager.Instance.DisplayTask("task5_fail");
         yield return npc.SpeakCoroutine("tasks", "task5_fail");
 
         // 隱藏 Task 面板

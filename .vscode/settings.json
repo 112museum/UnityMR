@@ -67,5 +67,6 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "UnityMR.sln"
+    "dotnet.defaultSolution": "UnityMR.sln",
+    "dotnet.automaticallyRestoreProjects": false
 }

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 public struct DialogueLine
 {
     public string speakerName;     // 誰說話 (NPC, 角色A, 角色B)
-    public string dialogueText;    // 對話內容
+    public string dialogueText;    // 送給後端 LLM 的 prompt/劇情稿（StoryModeManager.RequestDialogueLine）
     public AudioClip voiceOver;    // 語音檔 (如果有)
     public string npcAnimationTrigger; // NPC 說這句話時要做的動作
 }

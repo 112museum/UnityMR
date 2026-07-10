@@ -14,9 +14,12 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/YM AR.unity
     guid: 045fda6078afaee4a8c93eccb212709a
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/YM Physical.unity
     guid: 9a78568597c6bea458271cbac5d0cb58
+  - enabled: 1
+    path: Assets/Scenes/multiuser test.unity
+    guid: 876033dfc2a8f2e48946767264d56a43
   m_configObjects:
     com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: 5146df98c5d3d504a8d5e52063317a1c, type: 2}
     com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 49b61d976769e444d958b122fd60c936, type: 2}

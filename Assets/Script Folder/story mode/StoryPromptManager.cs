@@ -18,7 +18,7 @@ public class StoryPromptManager : MonoBehaviour, IOnEventCallback
     public static StoryPromptManager Instance { get; private set; }
 
     [Header("Backend Config")]
-    public string backendUrl = "http://192.168.50.94:5050";
+    public string backendUrl = "http://192.168.0.76:5050";
 
     private SocketIOUnity socket;
     private bool isConnected = false;

@@ -1,5 +1,6 @@
 using UnityEngine;
 using Photon.Pun;
+using System.Linq;
 
 public class StoryModeManager : MonoBehaviour
 {
@@ -15,21 +16,33 @@ public class StoryModeManager : MonoBehaviour
     [Tooltip("DialogueLine.dialogueText is only sent to the backend as a prompt — this is what actually shows/speaks the LLM's generated line to the player.")]
     public TextManager textManager;
     public TextToSpeech ttsManager;
-
-    // 玩家選角狀態
-    private string player1Role = "";
-    private string player2Role = "";
+    public Animator animator;
 
     // Guards against applying a backend response that arrives after the player has already
     // moved past the line it was requested for.
     private int pendingLineIndex = -1;
     private string pendingSpeaker = "";
 
+    // Set right before a line's TTS starts, so we know which line just finished
+    // speaking when TextToSpeech.OnSpeechCompleted fires.
+    private DialogueLine? lineBeingSpoken;
+
+    // Free chat currently in progress (null when not in free-chat mode).
+    private NPCChat activeFreeChatNpc;
+
+    // Fixed marker the backend is instructed to say once the player's answer
+    // satisfies the line's freeChatSuccessKeyword (see rag/llama_index.py).
+    private const string FreeChatSuccessMarker = "答對了！";
+
     private void OnEnable()
     {
         if (StoryPromptManager.Instance != null)
         {
             StoryPromptManager.Instance.OnStoryLine += HandleDialogueResponse;
+        }
+        if (ttsManager != null)
+        {
+            ttsManager.OnSpeechCompleted += HandleLineSpeechCompleted;
         }
     }
 
@@ -39,25 +52,18 @@ public class StoryModeManager : MonoBehaviour
         {
             StoryPromptManager.Instance.OnStoryLine -= HandleDialogueResponse;
         }
+        if (ttsManager != null)
+        {
+            ttsManager.OnSpeechCompleted -= HandleLineSpeechCompleted;
+        }
+        StopFreeChatListening();
     }
 
+    // Called by RoomLinker once the room has enough players — replaces the old
+    // manual two-player role-selection flow.
     public void StartStoryMode()
     {
-        // 1. 檢查是否剛好兩個人
-        // 2. 載入選角介面
-        currentStatus = StoryState.Selection;
-    }
-
-    public void SelectRole(string roleName, bool isPlayer1)
-    {
-        if (isPlayer1) player1Role = roleName;
-        else player2Role = roleName;
-
-        // 當兩人都選好角色，進入 Chapter 1
-        if (!string.IsNullOrEmpty(player1Role) && !string.IsNullOrEmpty(player2Role))
-        {
-            EnterChapter(1);
-        }
+        EnterChapter(1);
     }
 
     public void EnterChapter(int chapterNum)
@@ -75,7 +81,7 @@ public class StoryModeManager : MonoBehaviour
         {
             DialogueLine line = currentChapter.dialogueLines[currentLineIndex];
             RequestDialogueLine(line);
-            // NPCRequestManager.SetNPCAnimation(line.npcAnimationTrigger);
+            // animator.SetTrigger(line.npcAnimationTrigger);
         }
         else
         {
@@ -106,8 +112,68 @@ public class StoryModeManager : MonoBehaviour
     {
         if (speaker != pendingSpeaker || currentLineIndex != pendingLineIndex) return;
 
+        StoryChapterData currentChapter = allChapters[(int)currentStatus - 1];
+        lineBeingSpoken = currentChapter.dialogueLines[currentLineIndex];
+
         if (textManager != null) textManager.UpdateText(generatedText);
         if (ttsManager != null) ttsManager.ConvertTextToSpeech(generatedText);
+    }
+
+    // Fires once the scripted line's TTS actually finishes speaking (not when the
+    // text/response first arrives), so free chat opens at the right moment.
+    private void HandleLineSpeechCompleted()
+    {
+        if (lineBeingSpoken == null) return;
+
+        DialogueLine line = lineBeingSpoken.Value;
+        lineBeingSpoken = null;
+
+        if (line.startsFreeChat) StartFreeChat(line);
+    }
+
+    private void StartFreeChat(DialogueLine line)
+    {
+        NPCChat npc = FindObjectsOfType<NPCChat>().FirstOrDefault(n => n.npcRole == line.speakerName);
+        if (npc == null)
+        {
+            Debug.LogError($"[StoryModeManager] startsFreeChat set but no NPCChat found for speaker '{line.speakerName}'");
+            return;
+        }
+
+        activeFreeChatNpc = npc;
+
+        if (GroupChatManager.Instance != null)
+            GroupChatManager.Instance.OnNPCResponse += HandleFreeChatNpcResponse;
+
+        npc.StartChat(line.freeChatSuccessKeyword);
+    }
+
+    // The NPC (backend-side) judges whether the player's answer satisfies
+    // freeChatSuccessKeyword and says FreeChatSuccessMarker when it does — far more
+    // reliable than pattern-matching the player's raw, freely-worded message.
+    private void HandleFreeChatNpcResponse(string npcRole, string response)
+    {
+        if (activeFreeChatNpc == null || npcRole != activeFreeChatNpc.npcRole) return;
+        if (!response.Contains(FreeChatSuccessMarker)) return;
+
+        EndFreeChat();
+    }
+
+    private void EndFreeChat()
+    {
+        activeFreeChatNpc?.EndChat();
+        StopFreeChatListening();
+
+        currentLineIndex++;
+        PlayCurrentLine();
+    }
+
+    private void StopFreeChatListening()
+    {
+        if (GroupChatManager.Instance != null)
+            GroupChatManager.Instance.OnNPCResponse -= HandleFreeChatNpcResponse;
+
+        activeFreeChatNpc = null;
     }
 
     public void OnPlayerInteractSuccess()

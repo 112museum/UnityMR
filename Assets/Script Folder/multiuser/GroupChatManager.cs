@@ -13,10 +13,11 @@ public class GroupChatManager : MonoBehaviour, IOnEventCallback
     public static GroupChatManager Instance { get; private set; }
 
     [Header("Backend Config")]
-    public string backendUrl = "http://192.168.50.94:5050";
+    public string backendUrl = "http://192.168.0.76:5050";
 
     [Header("Player Config")]
     private string userName;
+    public string UserName => userName;
 
     private SocketIOUnity socket;
     private bool isInRoom = false;
@@ -281,7 +282,7 @@ public class GroupChatManager : MonoBehaviour, IOnEventCallback
         }
     }
 
-    public void StartChat(string npcRole, string personality = "", bool isRag = true, TextManager textManager = null, TextToSpeech ttsManager = null)
+    public void StartChat(string npcRole, string personality = "", bool isRag = true, TextManager textManager = null, TextToSpeech ttsManager = null, string successKeyword = null)
     {
         if (isInRoom && currentNpcRole == npcRole)
         {
@@ -305,7 +306,8 @@ public class GroupChatManager : MonoBehaviour, IOnEventCallback
             npc_role = npcRole,
             lang = "zh-TW",
             personality,
-            is_rag = isRag
+            is_rag = isRag,
+            success_keyword = successKeyword
         });
 
         Debug.Log($"[GroupChatManager] Starting chat with {npcRole}, socket connected: {socket.Connected}");

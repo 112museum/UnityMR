@@ -1,80 +1,134 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Networking;
-using Newtonsoft.Json.Linq;
+using SocketIOClient;
+using System;
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 public class NPCRequestManager : MonoBehaviour
 {
-    private string apiUrl = "http://192.168.50.133:5050/api/npc/ask";
+    [Header("Backend Config")]
+    public string backendUrl = "http://192.168.0.76:5050";
+
+    [Header("NPC Config")]
     public string npc_role = "白起";
     public string personality = "introvert";
     public bool is_rag = true;
     public TextToSpeech ttsManager;
     public TextManager textManager;
 
-    public void SendNPCRequest(string query)
+    private SocketIOUnity socket;
+    private string roomId;
+    private bool isInRoom = false;
+    private readonly Queue<string> pendingMessages = new Queue<string>();
+
+    void Start()
     {
-        StartCoroutine(PostRequest(query));
+        // Unique per instance so two kiosks talking to the same npc_role at
+        // the same time don't end up sharing one conversation history.
+        roomId = $"solo-{npc_role}-{Guid.NewGuid():N}";
+        InitializeSocket();
     }
 
-    IEnumerator PostRequest(string query)
+    void InitializeSocket()
     {
-        var jsonBody = new NPCRequest
+        var uri = new Uri(backendUrl);
+        socket = new SocketIOUnity(uri, new SocketIOOptions
         {
-            query = query,
-            lang = LanguageState.ApiLang,
-            npc_role = npc_role,
-            personality = personality,
-            is_rag = is_rag
+            Transport = SocketIOClient.Transport.TransportProtocol.WebSocket
+        });
+
+        socket.OnConnected += (sender, args) =>
+        {
+            Debug.Log("[NPCRequestManager] Connected to AI Backend");
+            JoinRoom();
         };
 
-        string jsonData = JsonUtility.ToJson(jsonBody);
-
-        using (UnityWebRequest www = UnityWebRequest.PostWwwForm(apiUrl, "POST"))
+        socket.On("error", (response) =>
         {
-            byte[] bodyRaw = new System.Text.UTF8Encoding().GetBytes(jsonData);
-            www.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            www.downloadHandler = new DownloadHandlerBuffer();
-            www.SetRequestHeader("Content-Type", "application/json");
-            www.SetRequestHeader("accept", "application/json");
+            Debug.LogError($"[NPCRequestManager] Server error: {response}");
+        });
 
-            yield return www.SendWebRequest();
+        socket.On("room_joined", (response) =>
+        {
+            isInRoom = true;
+            Debug.Log($"[NPCRequestManager] Joined room: {roomId}");
+            FlushPendingMessages();
+        });
 
-            if (www.result != UnityWebRequest.Result.Success)
-            {
-                Debug.Log("Error: " + www.error);
-                Debug.Log("Sending JSON: " + jsonData);
-                Debug.Log($"[NPCRequestManager] Using lang = {LanguageState.ApiLang}");
-                ttsManager.ConvertTextToSpeech("Server Error");
-            }
-            else
-            {
-                Debug.Log("Sending JSON: " + jsonData);
-                Debug.Log($"[NPCRequestManager] Using lang = {LanguageState.ApiLang}");
-                Debug.Log("Response: " + www.downloadHandler.text);
-                // Send the response text to the TTS manager
-                var json = JObject.Parse(www.downloadHandler.text);
-                var npcResponse = json["response"]?.ToString();
+        socket.OnUnityThread("npc_response", (response) =>
+        {
+            var data = response.GetValue<NpcResponseData>();
+            Debug.Log("Response: " + data.Response);
 
-                if (textManager != null)
-                {
-                    textManager.UpdateText(npcResponse);
-                }
+            if (textManager != null)
+                textManager.UpdateText(data.Response);
 
-                if (ttsManager != null)
-                    ttsManager.ConvertTextToSpeech(npcResponse);
-            }
+            if (ttsManager != null)
+                ttsManager.ConvertTextToSpeech(data.Response);
+        });
+
+        socket.OnUnityThread("npc_typing", (response) =>
+        {
+            if (textManager != null)
+                textManager.UpdateText("NPC typing...");
+        });
+
+        socket.ConnectAsync();
+    }
+
+    void JoinRoom()
+    {
+        socket.EmitAsync("join", new
+        {
+            room_id = roomId,
+            user_name = $"SoloUser_{roomId}",
+            npc_role,
+            lang = LanguageState.ApiLang,
+            personality,
+            is_rag
+        });
+    }
+
+    public void SendNPCRequest(string query)
+    {
+        if (!isInRoom)
+        {
+            Debug.Log("[NPCRequestManager] Not in a room yet; queuing message until joined");
+            pendingMessages.Enqueue(query);
+            return;
+        }
+
+        try
+        {
+            Debug.Log("Sending message: " + query);
+            Debug.Log($"[NPCRequestManager] Using lang = {LanguageState.ApiLang}");
+            socket.EmitAsync("send_chat_message", new { message = query });
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError("Error: " + ex.Message);
+            ttsManager?.ConvertTextToSpeech("Server Error");
         }
     }
 
-    [System.Serializable]
-    public class NPCRequest
+    private void FlushPendingMessages()
     {
-        public string query;
-        public string lang;
-        public string npc_role;
-        public string personality;
-        public bool is_rag;
+        while (pendingMessages.Count > 0)
+        {
+            var msg = pendingMessages.Dequeue();
+            SendNPCRequest(msg);
+        }
+    }
+
+    void OnDestroy()
+    {
+        socket?.DisconnectAsync();
+        socket?.Dispose();
+    }
+
+    private class NpcResponseData
+    {
+        [JsonPropertyName("npc_role")] public string NpcRole { get; set; }
+        [JsonPropertyName("response")] public string Response { get; set; }
     }
 }

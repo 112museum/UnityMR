@@ -1,18 +1,32 @@
+using MRTK.Tutorials.MultiUserCapabilities;
 using UnityEngine;
 
 public class ReturnToOriginal : MonoBehaviour
 {
-    private Vector3 originalPosition;
-    private Quaternion originalRotation;
+    // Stored relative to TableAnchor, not raw world space: TableAnchor itself gets
+    // moved later by QR-based alignment (QRAnchorAligner), after this object has
+    // already settled at its authored spot. A cached world-space snapshot would go
+    // stale the moment the anchor moves, sending the object back to where the table
+    // used to be instead of where it is now.
+    private Vector3 originalAnchorLocalPosition;
+    private Quaternion originalAnchorLocalRotation;
     private float collisionTime = 0f;
     private bool isColliding = false;
     private float requiredCollisionTime = 3f;
 
     void Start()
     {
-        // Store the original position and rotation
-        originalPosition = transform.position;
-        originalRotation = transform.rotation;
+        var anchor = TableAnchor.Instance;
+        if (anchor != null)
+        {
+            originalAnchorLocalPosition = anchor.transform.InverseTransformPoint(transform.position);
+            originalAnchorLocalRotation = Quaternion.Inverse(anchor.transform.rotation) * transform.rotation;
+        }
+        else
+        {
+            originalAnchorLocalPosition = transform.position;
+            originalAnchorLocalRotation = transform.rotation;
+        }
     }
 
     void OnCollisionEnter(Collision collision)
@@ -49,7 +63,16 @@ public class ReturnToOriginal : MonoBehaviour
 
     void ReturnToOriginalPosition()
     {
-        transform.position = originalPosition;
-        transform.rotation = originalRotation;
+        var anchor = TableAnchor.Instance;
+        if (anchor != null)
+        {
+            transform.position = anchor.transform.TransformPoint(originalAnchorLocalPosition);
+            transform.rotation = anchor.transform.rotation * originalAnchorLocalRotation;
+        }
+        else
+        {
+            transform.position = originalAnchorLocalPosition;
+            transform.rotation = originalAnchorLocalRotation;
+        }
     }
 }

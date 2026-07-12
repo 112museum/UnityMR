@@ -13,10 +13,18 @@ public class GroupChatManager : MonoBehaviour, IOnEventCallback
     public static GroupChatManager Instance { get; private set; }
 
     [Header("Backend Config")]
-    public string backendUrl = "http://192.168.50.94:5050";
+    public string backendUrl = "http://192.168.0.76:5050";
 
     [Header("Player Config")]
     private string userName;
+    public string UserName => userName;
+
+    // Set by RoomLinker once (via synced Photon room properties, see RoomLinker.cs) so
+    // every player in this visit shares the same value. Without it, "museum-{npcRole}" is
+    // a fixed name shared by every visitor group forever, so a new group would inherit
+    // whatever conversation history the previous group left in that room.
+    private string visitSessionId = "";
+    public void SetVisitSessionId(string id) => visitSessionId = id;
 
     private SocketIOUnity socket;
     private bool isInRoom = false;
@@ -281,7 +289,7 @@ public class GroupChatManager : MonoBehaviour, IOnEventCallback
         }
     }
 
-    public void StartChat(string npcRole, string personality = "", bool isRag = true, TextManager textManager = null, TextToSpeech ttsManager = null)
+    public void StartChat(string npcRole, string personality = "", bool isRag = true, TextManager textManager = null, TextToSpeech ttsManager = null, string successKeyword = null)
     {
         if (isInRoom && currentNpcRole == npcRole)
         {
@@ -297,15 +305,17 @@ public class GroupChatManager : MonoBehaviour, IOnEventCallback
 
         currentNpcRole = npcRole;
         string resolvedUserName = userName;
+        string roomId = string.IsNullOrEmpty(visitSessionId) ? $"museum-{npcRole}" : $"museum-{visitSessionId}-{npcRole}";
 
         socket.EmitAsync("join", new
         {
-            room_id = $"museum-{npcRole}",
+            room_id = roomId,
             user_name = resolvedUserName,
             npc_role = npcRole,
             lang = "zh-TW",
             personality,
-            is_rag = isRag
+            is_rag = isRag,
+            success_keyword = successKeyword
         });
 
         Debug.Log($"[GroupChatManager] Starting chat with {npcRole}, socket connected: {socket.Connected}");

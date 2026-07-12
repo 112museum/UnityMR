@@ -19,6 +19,13 @@ public class GroupChatManager : MonoBehaviour, IOnEventCallback
     private string userName;
     public string UserName => userName;
 
+    // Set by RoomLinker once (via synced Photon room properties, see RoomLinker.cs) so
+    // every player in this visit shares the same value. Without it, "museum-{npcRole}" is
+    // a fixed name shared by every visitor group forever, so a new group would inherit
+    // whatever conversation history the previous group left in that room.
+    private string visitSessionId = "";
+    public void SetVisitSessionId(string id) => visitSessionId = id;
+
     private SocketIOUnity socket;
     private bool isInRoom = false;
     private bool isPhotonRoomReady = false;
@@ -298,10 +305,11 @@ public class GroupChatManager : MonoBehaviour, IOnEventCallback
 
         currentNpcRole = npcRole;
         string resolvedUserName = userName;
+        string roomId = string.IsNullOrEmpty(visitSessionId) ? $"museum-{npcRole}" : $"museum-{visitSessionId}-{npcRole}";
 
         socket.EmitAsync("join", new
         {
-            room_id = $"museum-{npcRole}",
+            room_id = roomId,
             user_name = resolvedUserName,
             npc_role = npcRole,
             lang = "zh-TW",

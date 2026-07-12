@@ -14,12 +14,20 @@ public class NPCChat : MonoBehaviour
     // Called by the "Start Chat" button on this NPC
     public void StartChat()
     {
+        StartChat(null);
+    }
+
+    // Called by StoryModeManager to open free chat with a story-mode success condition:
+    // the NPC is told (via the backend prompt) to say "你成功了" once the player's
+    // answer satisfies successKeyword, so the caller can detect success from the NPC's reply.
+    public void StartChat(string successKeyword)
+    {
         if (GroupChatManager.Instance == null)
         {
             Debug.LogError("[NPCChat] GroupChatManager not found in scene");
             return;
         }
-        GroupChatManager.Instance.StartChat(npcRole, personality, isRag, textManager, ttsManager);
+        GroupChatManager.Instance.StartChat(npcRole, personality, isRag, textManager, ttsManager, successKeyword);
     }
 
     // Called by the "End Chat" button

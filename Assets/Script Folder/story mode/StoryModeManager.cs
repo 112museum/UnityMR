@@ -15,8 +15,17 @@ public class StoryModeManager : MonoBehaviour
     [Header("LLM Dialogue Display")]
     [Tooltip("DialogueLine.dialogueText is only sent to the backend as a prompt — this is what actually shows/speaks the LLM's generated line to the player.")]
     public TextManager textManager;
-    public TextToSpeech ttsManager;
+    // Speaks each generated line through Talker.Speak(string) so scripted lines share
+    // Talker's isGlobalSpeaking lock / 429 rate-limit buffer with everything else that
+    // talks. talker.ttsManager must be the same TextToSpeech instance Talker itself uses.
+    public Talker talker;
     public Animator animator;
+
+    // Fresh per playthrough (minted in StartStoryMode), so the backend room_id for this
+    // group's lines never collides with an earlier group's — otherwise the story-mode
+    // room ("story-{chapterId}-{npcRole}") is a fixed name nobody ever "leaves", so a new
+    // group would inherit the previous group's conversation history from the backend.
+    private string playthroughId = "";
 
     // Guards against applying a backend response that arrives after the player has already
     // moved past the line it was requested for.
@@ -36,13 +45,24 @@ public class StoryModeManager : MonoBehaviour
 
     private void OnEnable()
     {
+        if (talker != null && talker.ttsManager != null)
+        {
+            talker.ttsManager.OnSpeechCompleted += HandleLineSpeechCompleted;
+        }
+    }
+
+    // StoryPromptManager.Instance is set in ITS OWN Awake(), and Unity doesn't guarantee
+    // this object's OnEnable() runs after that — so subscribing here instead of OnEnable()
+    // is required: Unity always finishes every object's Awake() before any object's Start().
+    private void Start()
+    {
         if (StoryPromptManager.Instance != null)
         {
             StoryPromptManager.Instance.OnStoryLine += HandleDialogueResponse;
         }
-        if (ttsManager != null)
+        else
         {
-            ttsManager.OnSpeechCompleted += HandleLineSpeechCompleted;
+            Debug.LogError("[StoryModeManager] StoryPromptManager.Instance is still null in Start() — is StoryPromptManager in the scene?");
         }
     }
 
@@ -52,17 +72,20 @@ public class StoryModeManager : MonoBehaviour
         {
             StoryPromptManager.Instance.OnStoryLine -= HandleDialogueResponse;
         }
-        if (ttsManager != null)
+        if (talker != null && talker.ttsManager != null)
         {
-            ttsManager.OnSpeechCompleted -= HandleLineSpeechCompleted;
+            talker.ttsManager.OnSpeechCompleted -= HandleLineSpeechCompleted;
         }
         StopFreeChatListening();
     }
 
     // Called by RoomLinker once the room has enough players — replaces the old
-    // manual two-player role-selection flow.
-    public void StartStoryMode()
+    // manual two-player role-selection flow. visitSessionId comes from RoomLinker
+    // (synced via Photon room properties so every player agrees on the same value)
+    // and is also used to scope this visit's free-chat rooms — see GroupChatManager.
+    public void StartStoryMode(string visitSessionId)
     {
+        playthroughId = visitSessionId;
         EnterChapter(1);
     }
 
@@ -97,7 +120,13 @@ public class StoryModeManager : MonoBehaviour
 
         // Only one client actually asks the backend; every client (including this one)
         // receives the synced reply through StoryPromptManager.OnStoryLine.
-        if (PhotonNetwork.InRoom && !PhotonNetwork.IsMasterClient) return;
+        if (PhotonNetwork.InRoom && !PhotonNetwork.IsMasterClient)
+        {
+            Debug.Log($"[StoryModeManager] Not master client (inRoom={PhotonNetwork.InRoom}) — waiting for the master client's request to come back via Photon.");
+            return;
+        }
+
+        Debug.Log($"[StoryModeManager] Requesting line for speaker '{line.speakerName}', lineIndex={currentLineIndex}, inRoom={PhotonNetwork.InRoom}, isMaster={PhotonNetwork.IsMasterClient}");
 
         if (StoryPromptManager.Instance == null)
         {
@@ -105,18 +134,21 @@ public class StoryModeManager : MonoBehaviour
             return;
         }
 
-        StoryPromptManager.Instance.RequestLine(currentStatus.ToString(), currentLineIndex, line.speakerName, line.dialogueText);
+        StoryPromptManager.Instance.RequestLine(currentStatus.ToString(), currentLineIndex, line.speakerName, line.dialogueText, playthroughId);
     }
 
     private void HandleDialogueResponse(string speaker, string generatedText)
     {
+        Debug.Log($"[StoryModeManager] OnStoryLine received: speaker='{speaker}' (pending='{pendingSpeaker}'), lineIndex={currentLineIndex} (pending={pendingLineIndex})");
         if (speaker != pendingSpeaker || currentLineIndex != pendingLineIndex) return;
 
         StoryChapterData currentChapter = allChapters[(int)currentStatus - 1];
         lineBeingSpoken = currentChapter.dialogueLines[currentLineIndex];
 
         if (textManager != null) textManager.UpdateText(generatedText);
-        if (ttsManager != null) ttsManager.ConvertTextToSpeech(generatedText);
+        if (talker != null) talker.Speak(generatedText);
+
+        Debug.Log($"[StoryModeManager] {speaker}: {generatedText}");
     }
 
     // Fires once the scripted line's TTS actually finishes speaking (not when the

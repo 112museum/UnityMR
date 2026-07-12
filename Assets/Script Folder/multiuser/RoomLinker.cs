@@ -1,7 +1,9 @@
 // RoomLinker.cs — Joins a single fixed PUN room for all players, on demand
+using System;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 public class RoomLinker : MonoBehaviourPunCallbacks
 {
@@ -9,6 +11,11 @@ public class RoomLinker : MonoBehaviourPunCallbacks
     public StoryModeManager storyManager;
     public string fixedRoomName = "MRMuseum";
     public int playersNeededToStartStory = 2;
+
+    // Room custom property key. Only the master client sets it; Photon syncs the value to
+    // every other client via OnRoomPropertiesUpdate, so the whole group agrees on one id
+    // for both the story rooms and the free-chat rooms (see StoryModeManager, GroupChatManager).
+    private const string VisitSessionPropKey = "visitSessionId";
 
     private bool storyStarted = false;
 
@@ -49,8 +56,9 @@ public class RoomLinker : MonoBehaviourPunCallbacks
 
     public override void OnPlayerLeftRoom(Player otherPlayer) => UpdatePlayerCount();
 
-    // Shows the current headcount to the players and, once enough have joined,
-    // kicks off the scripted story (previously gated behind manual role selection).
+    // Shows the current headcount to the players and, once enough have joined, mints a
+    // shared session id for this visit (previously the story start was gated behind manual
+    // role selection).
     private void UpdatePlayerCount()
     {
         int count = PhotonNetwork.CurrentRoom.PlayerCount;
@@ -60,7 +68,25 @@ public class RoomLinker : MonoBehaviourPunCallbacks
         {
             storyStarted = true;
             SubtitleDisplayManager.Instance?.HideHint();
-            storyManager?.StartStoryMode();
+
+            // Only the master client mints the id; everyone (including the master, via its
+            // own OnRoomPropertiesUpdate callback) picks it up from the synced room property
+            // instead of generating their own — otherwise each client would get a different
+            // id and players would end up in different free-chat rooms.
+            if (PhotonNetwork.IsMasterClient)
+            {
+                string sessionId = Guid.NewGuid().ToString("N").Substring(0, 8);
+                PhotonNetwork.CurrentRoom.SetCustomProperties(new Hashtable { { VisitSessionPropKey, sessionId } });
+            }
         }
+    }
+
+    public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
+    {
+        if (!propertiesThatChanged.ContainsKey(VisitSessionPropKey)) return;
+
+        string sessionId = (string)propertiesThatChanged[VisitSessionPropKey];
+        chatManager?.SetVisitSessionId(sessionId);
+        storyManager?.StartStoryMode(sessionId);
     }
 }

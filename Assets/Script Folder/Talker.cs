@@ -1,5 +1,7 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System;
 
 public class Talker : MonoBehaviour
@@ -80,6 +82,54 @@ public class Talker : MonoBehaviour
 
         // 全部結束後隱藏面板並解鎖
         SubtitleDisplayManager.Instance.HideSubtitle();
-        isGlobalSpeaking = false; 
+        isGlobalSpeaking = false;
+    }
+
+    // 給 StoryModeManager 等場景用：播放單一句「當下才拿到的文字」（例如 LLM 即時生成的台詞），
+    // 不用先存成 Resources 底下的對話檔。共用同一把 isGlobalSpeaking 鎖和 429 緩衝時間。
+    public void Speak(string line)
+    {
+        if (isGlobalSpeaking)
+        {
+            Debug.LogWarning("[Talker] 正在說話中，拒絕新的語音請求：" + line);
+            return;
+        }
+        StartCoroutine(SpeakCoroutine(line));
+    }
+
+    public IEnumerator SpeakCoroutine(string line)
+    {
+        isGlobalSpeaking = true; // 上鎖
+
+        // LLM 生成的是一整段文章，字幕一次只能印一句，所以先按句尾標點（。！？!?）分句。
+        string[] sentences = SplitIntoSentences(line);
+        if (sentences.Length == 0) { isGlobalSpeaking = false; yield break; }
+
+        // 整段話共用同一個 SpeechSynthesizer 連線（不用每句都重新握手），
+        // OnSpeechCompleted 也只會在全部句子念完後觸發一次。
+        yield return ttsManager.SpeakSequenceCoroutine(sentences, sentence =>
+        {
+            if (SubtitleDisplayManager.Instance.subtitlePanel != null)
+                SubtitleDisplayManager.Instance.subtitlePanel.SetActive(true);
+            if (SubtitleDisplayManager.Instance.subtitleText != null)
+                SubtitleDisplayManager.Instance.subtitleText.text = sentence.Trim();
+        });
+
+        // 全部結束後隱藏面板並解鎖
+        SubtitleDisplayManager.Instance.HideSubtitle();
+        isGlobalSpeaking = false;
+    }
+
+    private static readonly Regex SentenceRegex = new Regex(@"[^。！？!?]+[。！？!?]*");
+
+    private static string[] SplitIntoSentences(string text)
+    {
+        var sentences = new List<string>();
+        foreach (Match m in SentenceRegex.Matches(text ?? ""))
+        {
+            string s = m.Value.Trim();
+            if (!string.IsNullOrEmpty(s)) sentences.Add(s);
+        }
+        return sentences.ToArray();
     }
 }

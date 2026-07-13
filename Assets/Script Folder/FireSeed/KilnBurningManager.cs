@@ -3,6 +3,11 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
+// [已停用] 專案的雙人共同視角是用 Photon PUN 做的，這支腳本是 Unity Netcode for
+// GameObjects (NGO) 版本，場景裡從未真的接上任何 NetworkManager/連線，不要掛到物件上。
+// 正式使用請改掛 PhotonKilnBurningManager.cs（邏輯一一對應，只是同步機制換成 Photon）。
+// 保留這支腳本只是避免刪掉還沒被採用前的既有程式碼，之後確定不用可以整支移除。
+//
 // 掛在窯爐物件上（需要 NetworkObject，由 Host/Server 端 Spawn）。
 // 兩位玩家同時按住各自的火種，燒製進度才會增加；有人放開就暫停或衰退。
 // 進度到 1 觸發完成事件（燒製特效、開放貼貼紙等）。

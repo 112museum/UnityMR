@@ -1,6 +1,11 @@
 using Unity.Netcode;
 using UnityEngine;
 
+// [已停用] 專案的雙人共同視角是用 Photon PUN 做的，這支腳本是 Unity Netcode for
+// GameObjects (NGO) 版本，場景裡從未真的接上任何 NetworkManager/連線，不要掛到物件上。
+// 正式使用請改掛 PhotonFireSeed.cs（邏輯一一對應，只是同步機制換成 Photon）。
+// 保留這支腳本只是避免刪掉還沒被採用前的既有程式碼，之後確定不用可以整支移除。
+//
 // 掛在跟 FireSeedButton 同一個 GameObject 上（該物件需要有 NetworkObject 元件）。
 // 把「這顆火種是否被按住」同步給另一台 HoloLens。
 // P1、P2 各自的火種物件 Ownership 需設成該玩家自己的 client。

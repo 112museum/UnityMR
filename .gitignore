@@ -78,3 +78,6 @@ crashlytics-build.properties
 
 # 忽略 Claude Code 的暫存資料夾
 .claude/
+
+# macOS 系統產生的檔案
+.DS_Store

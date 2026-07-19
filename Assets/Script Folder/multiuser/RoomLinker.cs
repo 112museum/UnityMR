@@ -49,7 +49,7 @@ public class RoomLinker : MonoBehaviourPunCallbacks
     public override void OnLeftRoom()
     {
         chatManager?.OnPhotonRoomLeft();
-        chatManager.EndChat();
+        chatManager?.EndChat();
     }
 
     public override void OnPlayerEnteredRoom(Player newPlayer) => UpdatePlayerCount();

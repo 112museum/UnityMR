@@ -82,4 +82,11 @@ public class FireSeedButton : MonoBehaviour
         Debug.Log($"[FireSeedButton] '{gameObject.name}' released. HoldTime={HoldTime:F2}s");
         onPressEnd?.Invoke();
     }
+
+    // 給網路同步腳本呼叫，用來反映「另一位玩家」在他們裝置上按住/放開的視覺狀態。
+    // 不會觸發 onPressStart/onPressEnd，避免遠端同步回來的狀態被誤當本地輸入又送一次網路封包。
+    public void SetHeldExternally(bool held)
+    {
+        IsHeld = held;
+    }
 }

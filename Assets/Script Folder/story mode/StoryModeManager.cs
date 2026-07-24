@@ -5,7 +5,7 @@ using System.Linq;
 
 public class StoryModeManager : MonoBehaviour
 {
-    public enum StoryState { Selection, Start, Chapter1, Chapter2, Chapter3, Ending }
+    public enum StoryState { Selection, Start, Chapter1, Chapter2, Chapter3, Chapter4, Ending }
 
     // So StoryObjectVisibility (and anything else reacting to story progression) can find
     // this without a scene-wide search. Set in Awake() — see the Start()/Instance ordering
@@ -21,7 +21,7 @@ public class StoryModeManager : MonoBehaviour
     public StoryState currentStatus = StoryState.Selection;
     public int currentLineIndex = 0;
 
-    public StoryChapterData[] allChapters; // 放你剛剛建立的 5 個章節資料
+    public StoryChapterData[] allChapters; // 依序放 Start, Chapter1~4, Ending，共 6 個章節資料
 
     [Header("LLM Dialogue Display")]
     [Tooltip("DialogueLine.dialogueText is only sent to the backend as a prompt — this is what actually shows/speaks the LLM's generated line to the player.")]
@@ -265,7 +265,7 @@ public class StoryModeManager : MonoBehaviour
     private void NextChapter()
     {
         int nextNum = (int)currentStatus + 1;
-        if (nextNum <= 4) EnterChapter(nextNum);
+        if (nextNum <= 5) EnterChapter(nextNum);
         else currentStatus = StoryState.Ending;
     }
 }

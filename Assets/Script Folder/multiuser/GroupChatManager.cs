@@ -195,6 +195,7 @@ public class GroupChatManager : MonoBehaviour, IOnEventCallback
             var msg = pendingUserMessages.Dequeue();
             try
             {
+                isLastSender = true;
                 socket.EmitAsync("send_chat_message", new { message = msg });
             }
             catch (Exception ex)
@@ -266,7 +267,7 @@ public class GroupChatManager : MonoBehaviour, IOnEventCallback
         {
             if (npc.npcRole == npcRole)
             {
-                if (npc.textManager != null) npc.textManager.UpdateText(responseText);
+                if (npc.textManager != null) npc.textManager.UpdateNpcLine(responseText);
                 if (npc.ttsManager != null) npc.ttsManager.ConvertTextToSpeech(responseText);
                 break;
             }
@@ -283,13 +284,13 @@ public class GroupChatManager : MonoBehaviour, IOnEventCallback
         {
             if (npc.npcRole == npcRole)
             {
-                if (npc.textManager != null) npc.textManager.UpdateText("NPC typing...");
+                if (npc.textManager != null) npc.textManager.UpdateNpcLine("NPC typing...");
                 break;
             }
         }
     }
 
-    public void StartChat(string npcRole, string personality = "", bool isRag = true, TextManager textManager = null, TextToSpeech ttsManager = null, string successKeyword = null)
+    public void StartChat(string npcRole, string personality = "", bool isRag = true, TextManager textManager = null, TextToSpeech ttsManager = null, string successKeyword = null, string answerKey = null, string openingLine = null)
     {
         if (isInRoom && currentNpcRole == npcRole)
         {
@@ -315,7 +316,9 @@ public class GroupChatManager : MonoBehaviour, IOnEventCallback
             lang = "zh-TW",
             personality,
             is_rag = isRag,
-            success_keyword = successKeyword
+            success_keyword = successKeyword,
+            answer_key = answerKey,
+            opening_line = openingLine
         });
 
         Debug.Log($"[GroupChatManager] Starting chat with {npcRole}, socket connected: {socket.Connected}");

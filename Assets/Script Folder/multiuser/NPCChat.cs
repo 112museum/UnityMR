@@ -18,16 +18,19 @@ public class NPCChat : MonoBehaviour
     }
 
     // Called by StoryModeManager to open free chat with a story-mode success condition:
-    // the NPC is told (via the backend prompt) to say "你成功了" once the player's
-    // answer satisfies successKeyword, so the caller can detect success from the NPC's reply.
-    public void StartChat(string successKeyword)
+    // the NPC is told (via the backend prompt) to say successKeyword once the player's
+    // answer satisfies answerKey, so the caller can detect success from the NPC's reply.
+    // openingLine, if given, is seeded as the room's first NPC turn so the NPC still
+    // knows what question it just asked even though this free-chat room is a fresh,
+    // isolated backend session (see StoryModeManager/StoryPromptManager room isolation).
+    public void StartChat(string successKeyword, string answerKey = null, string openingLine = null)
     {
         if (GroupChatManager.Instance == null)
         {
             Debug.LogError("[NPCChat] GroupChatManager not found in scene");
             return;
         }
-        GroupChatManager.Instance.StartChat(npcRole, personality, isRag, textManager, ttsManager, successKeyword);
+        GroupChatManager.Instance.StartChat(npcRole, personality, isRag, textManager, ttsManager, successKeyword, answerKey, openingLine);
     }
 
     // Called by the "End Chat" button

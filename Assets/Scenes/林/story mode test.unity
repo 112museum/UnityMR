@@ -2456,6 +2456,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f0c911ffa49e52342ac652f06ed8b71b, type: 2}
   - {fileID: 11400000, guid: 9967236f937e0004591776db30816ca6, type: 2}
   - {fileID: 11400000, guid: 47c01137f39282547b9feeef520eb7ea, type: 2}
+  - {fileID: 11400000, guid: be3adbbb2ea2429f819174cad0db1282, type: 2}
   - {fileID: 11400000, guid: b551a668c8cd61448aba70150fca4b9c, type: 2}
   textManager: {fileID: 1886907309}
   talker: {fileID: 1886907304}

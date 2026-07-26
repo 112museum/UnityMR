@@ -290,7 +290,7 @@ public class GroupChatManager : MonoBehaviour, IOnEventCallback
         }
     }
 
-    public void StartChat(string npcRole, string personality = "", bool isRag = true, TextManager textManager = null, TextToSpeech ttsManager = null, string successKeyword = null, string answerKey = null, string openingLine = null)
+    public void StartChat(string npcRole, string personality = "", bool isRag = true, TextManager textManager = null, TextToSpeech ttsManager = null, string successKeyword = null, string answerKey = null, string openingLine = null, string hint = null)
     {
         if (isInRoom && currentNpcRole == npcRole)
         {
@@ -318,7 +318,8 @@ public class GroupChatManager : MonoBehaviour, IOnEventCallback
             is_rag = isRag,
             success_keyword = successKeyword,
             answer_key = answerKey,
-            opening_line = openingLine
+            opening_line = openingLine,
+            hint = hint
         });
 
         Debug.Log($"[GroupChatManager] Starting chat with {npcRole}, socket connected: {socket.Connected}");

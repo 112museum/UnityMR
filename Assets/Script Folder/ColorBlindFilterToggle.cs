@@ -28,6 +28,9 @@ public class ColorBlindFilterToggle : MonoBehaviour
     [Header("按鈕文字（可選，用來顯示目前開/關狀態）")]
     public TMP_Text buttonLabel;
 
+    [Header("型別選擇面板（按下開啟濾鏡時彈出，讓玩家選色盲類型；面板上三顆按鈕的 OnClick() 各自綁 SelectType(int)，0=Protanomalous/1=Deuteranomalous/2=Tritanomalous，順序需對應上面 enum）")]
+    public GameObject typeSelectionPanel;
+
     private bool isFilterOn = false;
     private Material[][] _originalMaterials;
     private Material[][] _tintedMaterials;
@@ -41,6 +44,11 @@ public class ColorBlindFilterToggle : MonoBehaviour
 
         CacheMaterials();
         UpdateButtonLabel();
+
+        if (typeSelectionPanel != null)
+        {
+            typeSelectionPanel.SetActive(false);
+        }
     }
 
     // 幫每個目標物件各自準備一份「濾鏡材質」，保留該物件原本的貼圖(_MainTex)，
@@ -97,18 +105,46 @@ public class ColorBlindFilterToggle : MonoBehaviour
         return tex;
     }
 
-    // 把這個方法掛到 Button 的 On Click()
+    // 把這個方法掛到「開啟/關閉濾鏡」Button 的 On Click()。
+    // 關閉時型別已經知道了，直接關掉不用重問；開啟時要先跳出型別選擇面板，
+    // 玩家選了之後才真的套用濾鏡（見 SelectType）。
     public void ToggleFilter()
     {
-        isFilterOn = !isFilterOn;
-
         if (isFilterOn)
         {
-            ApplyMultipliers();
+            isFilterOn = false;
+            ApplyToTargets(false);
+            UpdateButtonLabel();
+            return;
         }
 
-        ApplyToTargets(isFilterOn);
+        if (typeSelectionPanel != null)
+        {
+            typeSelectionPanel.SetActive(true);
+        }
+        else
+        {
+            // 沒接面板就退回舊行為：直接用 Inspector 上設定的 type 開啟，方便單獨測試這顆 script。
+            SelectType(type);
+        }
+    }
+
+    // 掛到型別選擇面板上三顆按鈕的 On Click()，依 enum 順序傳 0/1/2。
+    public void SelectType(int typeIndex) => SelectType((ColorBlindType)typeIndex);
+
+    public void SelectType(ColorBlindType selectedType)
+    {
+        type = selectedType;
+        isFilterOn = true;
+
+        ApplyMultipliers();
+        ApplyToTargets(true);
         UpdateButtonLabel();
+
+        if (typeSelectionPanel != null)
+        {
+            typeSelectionPanel.SetActive(false);
+        }
     }
 
     private void ApplyMultipliers()

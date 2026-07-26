@@ -89,7 +89,7 @@ public class STTManager : MonoBehaviour
 
         if (string.IsNullOrEmpty(finalText)) return;
 
-        if (textManager != null) textManager.UpdateText(finalText);
+        if (textManager != null) textManager.UpdatePlayerLine(finalText);
         if (GroupChatManager.Instance != null) GroupChatManager.Instance.SendChatMessage(finalText);
         else Debug.LogError("[STT] GroupChatManager instance not found.");
     }
@@ -101,7 +101,7 @@ public class STTManager : MonoBehaviour
         string display = _accumulatedText + e.Result.Text;
         _mainThreadQueue.Enqueue(() =>
         {
-            if (textManager != null) textManager.UpdateText(display);
+            if (textManager != null) textManager.UpdatePlayerLine(display);
         });
     }
 

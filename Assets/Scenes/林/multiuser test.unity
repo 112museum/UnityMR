@@ -383,7 +383,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chatManager: {fileID: 804071340}
+  storyManager: {fileID: 0}
   fixedRoomName: MRMuseum
+  playersNeededToStartStory: 2
 --- !u!114 &804071340
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -790,11 +792,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1293215806}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1297881427 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2127244062571972473, guid: cc9c5e0324a956b48bfe51ef2b3bfa1e, type: 3}
+  m_PrefabInstance: {fileID: 4677700357305066907}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1585692786 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1643441785983802819, guid: cc9c5e0324a956b48bfe51ef2b3bfa1e, type: 3}
   m_PrefabInstance: {fileID: 4677700357305066907}
   m_PrefabAsset: {fileID: 0}
+--- !u!95 &1585692787
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1297881427}
+  m_Enabled: 1
+  m_Avatar: {fileID: 9000000, guid: 1501365118aa208489e714849bd5a913, type: 3}
+  m_Controller: {fileID: 9100000, guid: 2f30a5fb0319ea04685f2684b963f2e7, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &1763899986
 GameObject:
   m_ObjectHideFlags: 0
@@ -1590,7 +1618,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2127244062571972473, guid: cc9c5e0324a956b48bfe51ef2b3bfa1e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1585692787}
   m_SourcePrefab: {fileID: 100100000, guid: cc9c5e0324a956b48bfe51ef2b3bfa1e, type: 3}
 --- !u!1001 &8596887323892556495
 PrefabInstance:

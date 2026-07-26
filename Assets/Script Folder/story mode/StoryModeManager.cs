@@ -191,6 +191,11 @@ public class StoryModeManager : MonoBehaviour
         if (line.objectsToHide != null)
             foreach (string tag in line.objectsToHide) OnHideObjectTag?.Invoke(tag);
 
+        // Independent of startsFreeChat/requiresInteraction below — shows whichever of
+        // taskTextPlayer1/2 matches this client's join order, or hides the panel if this
+        // line didn't set one (so a previous line's hint doesn't linger).
+        ShowHintForLocalPlayer(line);
+
         if (line.startsFreeChat)
         {
             StartFreeChat(line, generatedText);
@@ -204,6 +209,21 @@ public class StoryModeManager : MonoBehaviour
             currentLineIndex++;
             PlayCurrentLine();
         }
+    }
+
+    // ActorNumber is assigned by Photon in join order — the first player to join the room
+    // is always 1, so this needs no separate role-assignment scheme (see RoomLinker).
+    private void ShowHintForLocalPlayer(DialogueLine line)
+    {
+        if (SubtitleDisplayManager.Instance == null) return;
+
+        bool isPlayerOne = PhotonNetwork.LocalPlayer.ActorNumber == 1;
+        string content = isPlayerOne ? line.taskTextPlayer1 : line.taskTextPlayer2;
+
+        if (string.IsNullOrEmpty(content))
+            SubtitleDisplayManager.Instance.HideHint();
+        else
+            SubtitleDisplayManager.Instance.DisplayHintText(content);
     }
 
     private void StartFreeChat(DialogueLine line, string openingLine)
@@ -221,7 +241,7 @@ public class StoryModeManager : MonoBehaviour
         if (GroupChatManager.Instance != null)
             GroupChatManager.Instance.OnNPCResponse += HandleFreeChatNpcResponse;
 
-        npc.StartChat(line.freeChatSuccessKeyword, line.freeChatAnswerKey, openingLine);
+        npc.StartChat(line.freeChatSuccessKeyword, line.freeChatAnswerKey, openingLine, line.freeChatHint);
     }
 
     // The NPC (backend-side) judges whether the player's answer satisfies
@@ -230,6 +250,9 @@ public class StoryModeManager : MonoBehaviour
     private void HandleFreeChatNpcResponse(string npcRole, string response)
     {
         if (activeFreeChatNpc == null || npcRole != activeFreeChatNpc.npcRole) return;
+
+        SubtitleDisplayManager.Instance?.DisplaySubtitleText(response);
+
         if (string.IsNullOrEmpty(activeFreeChatSuccessKeyword)) return;
         if (!response.Contains(activeFreeChatSuccessKeyword)) return;
 
@@ -240,6 +263,9 @@ public class StoryModeManager : MonoBehaviour
     {
         activeFreeChatNpc?.EndChat();
         StopFreeChatListening();
+
+        SubtitleDisplayManager.Instance?.HideSubtitle();
+        SubtitleDisplayManager.Instance?.HideTask();
 
         currentLineIndex++;
         PlayCurrentLine();

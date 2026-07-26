@@ -9,7 +9,6 @@ public class STTManager : MonoBehaviour
     private string region = "eastasia";
     private SpeechRecognizer recognizer;
     private bool isRecognizing = false;
-    public TextManager textManager;
 
     private readonly ConcurrentQueue<Action> _mainThreadQueue = new();
     private string _accumulatedText = "";
@@ -84,12 +83,15 @@ public class STTManager : MonoBehaviour
         isRecognizing = false;
         Debug.Log("[STT] Continuous recognition stopped");
 
+        // Runs after StopContinuousRecognitionAsync actually completes (this method is
+        // async void — a caller that doesn't await it would otherwise race past this).
+        SubtitleDisplayManager.Instance?.HideTask();
+
         string finalText = _accumulatedText.Trim();
         _accumulatedText = "";
 
         if (string.IsNullOrEmpty(finalText)) return;
 
-        if (textManager != null) textManager.UpdatePlayerLine(finalText);
         if (GroupChatManager.Instance != null) GroupChatManager.Instance.SendChatMessage(finalText);
         else Debug.LogError("[STT] GroupChatManager instance not found.");
     }
@@ -101,7 +103,7 @@ public class STTManager : MonoBehaviour
         string display = _accumulatedText + e.Result.Text;
         _mainThreadQueue.Enqueue(() =>
         {
-            if (textManager != null) textManager.UpdatePlayerLine(display);
+            SubtitleDisplayManager.Instance?.DisplayPlayerSpeechText(display);
         });
     }
 

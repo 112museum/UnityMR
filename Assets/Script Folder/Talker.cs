@@ -101,7 +101,7 @@ public class Talker : MonoBehaviour
     {
         isGlobalSpeaking = true; // 上鎖
 
-        // LLM 生成的是一整段文章，字幕一次只能印一句，所以先按句尾標點（。！？!?）分句。
+        // LLM 生成的是一整段文章，字幕一次只能印一句，所以先按句尾標點（。！？!?；;）分句。
         string[] sentences = SplitIntoSentences(line);
         if (sentences.Length == 0) { isGlobalSpeaking = false; yield break; }
 
@@ -120,7 +120,7 @@ public class Talker : MonoBehaviour
         isGlobalSpeaking = false;
     }
 
-    private static readonly Regex SentenceRegex = new Regex(@"[^。！？!?]+[。！？!?]*");
+    private static readonly Regex SentenceRegex = new Regex(@"[^。！？!?；;]+[。！？!?；;]*");
 
     private static string[] SplitIntoSentences(string text)
     {

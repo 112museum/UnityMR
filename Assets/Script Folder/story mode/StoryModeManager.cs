@@ -1,16 +1,27 @@
+using System;
 using UnityEngine;
 using Photon.Pun;
 using System.Linq;
 
 public class StoryModeManager : MonoBehaviour
 {
-    public enum StoryState { Selection, Start, Chapter1, Chapter2, Chapter3, Ending }
+    public enum StoryState { Selection, Start, Chapter1, Chapter2, Chapter3, Chapter4, Ending }
+
+    // So StoryObjectVisibility (and anything else reacting to story progression) can find
+    // this without a scene-wide search. Set in Awake() — see the Start()/Instance ordering
+    // note below for why listeners must subscribe in their own Start(), not OnEnable().
+    public static StoryModeManager Instance { get; private set; }
+
+    // Fired once per tag in a line's objectsToShow/objectsToHide when that line finishes
+    // speaking (see HandleLineSpeechCompleted). StoryObjectVisibility listens for these.
+    public event Action<string> OnShowObjectTag;
+    public event Action<string> OnHideObjectTag;
 
     // 網路同步變數 (以預想的同步邏輯為例)
     public StoryState currentStatus = StoryState.Selection;
     public int currentLineIndex = 0;
 
-    public StoryChapterData[] allChapters; // 放你剛剛建立的 5 個章節資料
+    public StoryChapterData[] allChapters; // 依序放 Start, Chapter1~4, Ending，共 6 個章節資料
 
     [Header("LLM Dialogue Display")]
     [Tooltip("DialogueLine.dialogueText is only sent to the backend as a prompt — this is what actually shows/speaks the LLM's generated line to the player.")]
@@ -36,12 +47,24 @@ public class StoryModeManager : MonoBehaviour
     // speaking when TextToSpeech.OnSpeechCompleted fires.
     private DialogueLine? lineBeingSpoken;
 
+    // The LLM-generated text for lineBeingSpoken (not the same as its dialogueText, which
+    // is only the director-side prompt) — carried into StartFreeChat as the free-chat room's
+    // opening_line, so the NPC still knows what it just asked even though that room is a
+    // fresh, isolated backend session (see StoryPromptManager's room-isolation comment).
+    private string lineBeingSpokenText;
+
     // Free chat currently in progress (null when not in free-chat mode).
     private NPCChat activeFreeChatNpc;
 
-    // Fixed marker the backend is instructed to say once the player's answer
-    // satisfies the line's freeChatSuccessKeyword (see rag/llama_index.py).
-    private const string FreeChatSuccessMarker = "答對了！";
+    // The active line's own freeChatSuccessKeyword — the backend is instructed to reply
+    // with this exact phrase once the player's answer satisfies it (see rag/llama_index.py
+    // _format_success_condition), so we watch for this same value, not a fixed marker.
+    private string activeFreeChatSuccessKeyword;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     private void OnEnable()
     {
@@ -144,6 +167,7 @@ public class StoryModeManager : MonoBehaviour
 
         StoryChapterData currentChapter = allChapters[(int)currentStatus - 1];
         lineBeingSpoken = currentChapter.dialogueLines[currentLineIndex];
+        lineBeingSpokenText = generatedText;
 
         if (textManager != null) textManager.UpdateText(generatedText);
         if (talker != null) talker.Speak(generatedText);
@@ -158,12 +182,31 @@ public class StoryModeManager : MonoBehaviour
         if (lineBeingSpoken == null) return;
 
         DialogueLine line = lineBeingSpoken.Value;
+        string generatedText = lineBeingSpokenText;
         lineBeingSpoken = null;
+        lineBeingSpokenText = null;
 
-        if (line.startsFreeChat) StartFreeChat(line);
+        if (line.objectsToShow != null)
+            foreach (string tag in line.objectsToShow) OnShowObjectTag?.Invoke(tag);
+        if (line.objectsToHide != null)
+            foreach (string tag in line.objectsToHide) OnHideObjectTag?.Invoke(tag);
+
+        if (line.startsFreeChat)
+        {
+            StartFreeChat(line, generatedText);
+        }
+        else if (line.requiresInteraction)
+        {
+            // Wait for the outside world to call OnPlayerInteractSuccess() before advancing.
+        }
+        else
+        {
+            currentLineIndex++;
+            PlayCurrentLine();
+        }
     }
 
-    private void StartFreeChat(DialogueLine line)
+    private void StartFreeChat(DialogueLine line, string openingLine)
     {
         NPCChat npc = FindObjectsOfType<NPCChat>().FirstOrDefault(n => n.npcRole == line.speakerName);
         if (npc == null)
@@ -173,20 +216,22 @@ public class StoryModeManager : MonoBehaviour
         }
 
         activeFreeChatNpc = npc;
+        activeFreeChatSuccessKeyword = line.freeChatSuccessKeyword;
 
         if (GroupChatManager.Instance != null)
             GroupChatManager.Instance.OnNPCResponse += HandleFreeChatNpcResponse;
 
-        npc.StartChat(line.freeChatSuccessKeyword);
+        npc.StartChat(line.freeChatSuccessKeyword, line.freeChatAnswerKey, openingLine);
     }
 
     // The NPC (backend-side) judges whether the player's answer satisfies
-    // freeChatSuccessKeyword and says FreeChatSuccessMarker when it does — far more
+    // freeChatSuccessKeyword and, if so, replies with that exact same phrase — far more
     // reliable than pattern-matching the player's raw, freely-worded message.
     private void HandleFreeChatNpcResponse(string npcRole, string response)
     {
         if (activeFreeChatNpc == null || npcRole != activeFreeChatNpc.npcRole) return;
-        if (!response.Contains(FreeChatSuccessMarker)) return;
+        if (string.IsNullOrEmpty(activeFreeChatSuccessKeyword)) return;
+        if (!response.Contains(activeFreeChatSuccessKeyword)) return;
 
         EndFreeChat();
     }
@@ -206,6 +251,7 @@ public class StoryModeManager : MonoBehaviour
             GroupChatManager.Instance.OnNPCResponse -= HandleFreeChatNpcResponse;
 
         activeFreeChatNpc = null;
+        activeFreeChatSuccessKeyword = null;
     }
 
     public void OnPlayerInteractSuccess()
@@ -219,7 +265,7 @@ public class StoryModeManager : MonoBehaviour
     private void NextChapter()
     {
         int nextNum = (int)currentStatus + 1;
-        if (nextNum <= 4) EnterChapter(nextNum);
+        if (nextNum <= 5) EnterChapter(nextNum);
         else currentStatus = StoryState.Ending;
     }
 }

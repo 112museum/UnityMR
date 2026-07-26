@@ -23,14 +23,16 @@ public class NPCChat : MonoBehaviour
     // openingLine, if given, is seeded as the room's first NPC turn so the NPC still
     // knows what question it just asked even though this free-chat room is a fresh,
     // isolated backend session (see StoryModeManager/StoryPromptManager room isolation).
-    public void StartChat(string successKeyword, string answerKey = null, string openingLine = null)
+    // hint, if given, is never shown to the player directly — the backend prompt only
+    // lets the NPC draw on it to nudge a stuck player, on its own judgement of timing.
+    public void StartChat(string successKeyword, string answerKey = null, string openingLine = null, string hint = null)
     {
         if (GroupChatManager.Instance == null)
         {
             Debug.LogError("[NPCChat] GroupChatManager not found in scene");
             return;
         }
-        GroupChatManager.Instance.StartChat(npcRole, personality, isRag, textManager, ttsManager, successKeyword, answerKey, openingLine);
+        GroupChatManager.Instance.StartChat(npcRole, personality, isRag, textManager, ttsManager, successKeyword, answerKey, openingLine, hint);
     }
 
     // Called by the "End Chat" button

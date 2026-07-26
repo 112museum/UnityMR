@@ -64,6 +64,21 @@ public class SubtitleDisplayManager : MonoBehaviour
 
         taskText.text = content;
     }
+
+    // Free chat：AI 回覆整段直接印在 subtitlePanel（跟 StartLiveSubtitle/UpdateLiveSubtitle
+    // 的逐字累加不同，這裡是一次性整段設定，見 StoryModeManager.HandleFreeChatNpcResponse）
+    public void DisplaySubtitleText(string content)
+    {
+        subtitlePanel.SetActive(true);
+        subtitleText.text = content;
+    }
+
+    // Free chat：借用 taskPanel 即時顯示玩家語音辨識結果（見 STTManager）
+    public void DisplayPlayerSpeechText(string content)
+    {
+        taskPanel.SetActive(true);
+        taskText.text = content;
+    }
     public void HideSubtitle() { if (subtitlePanel != null) subtitlePanel.SetActive(false); }
     public void HideHint() { if (hintPanel != null) hintPanel.SetActive(false); }
     public void HideTask() { if (taskPanel != null) taskPanel.SetActive(false); }

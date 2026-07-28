@@ -13,8 +13,10 @@ public class StickerDraggable : MonoBehaviour
 {
     [SerializeField] private Color stickerColor = Color.red;
     [SerializeField] private Transform bowlTarget;
-    [SerializeField] private float placementRange = 0.15f; // 離碗的 Renderer bounds 多近才算「貼上去」
+    [SerializeField] private float placementRange = 0.15f; // 離碗的實際表面多近才算「貼上去」
     [SerializeField] private string placedStickerPrefabName = "Sticker/StickerPlaced";
+    [SerializeField] private float surfaceOffset = 0.002f; // 貼紙沿法線微幅推出表面，避免跟碗的曲面 z-fighting
+    [SerializeField] private float stackOffsetStep = 0.0005f; // 每多一顆已貼的貼紙，再多推出一點，避免兩顆貼紙重疊處彼此 z-fighting
 
     private ObjectManipulator _manipulator;
     private Vector3 _trayLocalPosition;
@@ -47,24 +49,37 @@ public class StickerDraggable : MonoBehaviour
     {
         if (bowlTarget == null) return;
 
-        Renderer bowlRenderer = bowlTarget.GetComponentInChildren<Renderer>();
-        if (bowlRenderer == null) return;
+        Collider bowlCollider = bowlTarget.GetComponentInChildren<Collider>();
+        if (bowlCollider == null) return;
 
-        Vector3 closestPoint = bowlRenderer.bounds.ClosestPoint(transform.position);
-        float distance = Vector3.Distance(transform.position, closestPoint);
+        // 用 Collider 實際表面做 Raycast（而不是 Renderer.bounds 的 AABB），
+        // 對圓弧形的碗/罐才能算出真正貼在表面上的點跟法線；就算是非 convex 的
+        // MeshCollider，Raycast 一樣能打到正確表面（不像 ClosestPoint 只支援 convex）。
+        Vector3 toBowlCenter = bowlCollider.bounds.center - transform.position;
+        float maxDistance = toBowlCenter.magnitude + bowlCollider.bounds.extents.magnitude;
+        if (maxDistance < 0.0001f) return;
+
+        if (!bowlCollider.Raycast(new Ray(transform.position, toBowlCenter), out RaycastHit hit, maxDistance))
+        {
+            return; // 沒打中碗的表面，距離太遠或角度不對
+        }
+
+        float distance = Vector3.Distance(transform.position, hit.point);
         if (distance > placementRange) return;
 
-        // 用「碗中心 -> 最近表面點」的方向近似表面法線，讓貼紙面朝外，
-        // 對圓弧形的碗/罐來說是合理的簡化(不用真的採樣 mesh 法線)。
-        Vector3 outwardNormal = (closestPoint - bowlRenderer.bounds.center).normalized;
-        if (outwardNormal == Vector3.zero) outwardNormal = Vector3.up;
-        Quaternion rotation = Quaternion.LookRotation(-outwardNormal, Vector3.up);
+        Quaternion rotation = Quaternion.LookRotation(-hit.normal, Vector3.up);
+
+        // 每顆貼紙沿法線推出的距離都跟「這顆碗上已經貼了幾顆」有關，就算兩顆貼紙
+        // 貼在同一個位置重疊，深度也一定不一樣，不會剛好卡在同一個平面上互相 z-fighting。
+        int existingStickerCount = bowlCollider.transform.childCount;
+        float totalOffset = surfaceOffset + existingStickerCount * stackOffsetStep;
+        Vector3 placementPosition = hit.point + hit.normal * totalOffset;
 
         PhotonNetwork.Instantiate(
             placedStickerPrefabName,
-            closestPoint,
+            placementPosition,
             rotation,
-            data: new object[] { stickerColor.r, stickerColor.g, stickerColor.b });
+            data: new object[] { stickerColor.r, stickerColor.g, stickerColor.b, bowlTarget.name });
     }
 
     private void ReturnToTray()

@@ -43,7 +43,7 @@ public class FireSeedTestStoryManager : MonoBehaviour
 
     private void ShowIdleHint()
     {
-        SetText("P1、P2 請同時捏住兩側的火種，開始燒製");
+        SetText("P1、P2 請同時按住兩側的按鈕，開始燒製");
     }
 
     private void ShowBurningHint()

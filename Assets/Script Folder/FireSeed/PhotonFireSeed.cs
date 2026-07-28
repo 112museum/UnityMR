@@ -3,7 +3,7 @@ using UnityEngine;
 
 // 掛在跟 FireSeedButton 同一個 GameObject 上，該物件需要有 PhotonView 元件
 // （Ownership Transfer 請設為 Takeover）。
-// 哪一位玩家先伸手捏住這顆火種，就由該玩家的裝置取得 ownership，之後由該裝置
+// 哪一位玩家先按下這顆火種的按鈕，就由該玩家的裝置取得 ownership，之後由該裝置
 // 負責把「是否按住」同步給房間裡的另一台 HoloLens；沒人碰過的火種預設由 MasterClient 控制。
 [RequireComponent(typeof(FireSeedButton))]
 [RequireComponent(typeof(PhotonView))]

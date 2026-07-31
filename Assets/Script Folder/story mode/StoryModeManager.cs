@@ -5,7 +5,7 @@ using System.Linq;
 
 public class StoryModeManager : MonoBehaviour
 {
-    public enum StoryState { Selection, Start, Chapter1, Chapter2, Chapter3, Chapter4, Ending }
+    public enum StoryState { Selection, Start, Chapter1, Chapter2, Chapter3, Ending }
 
     // So StoryObjectVisibility (and anything else reacting to story progression) can find
     // this without a scene-wide search. Set in Awake() — see the Start()/Instance ordering
@@ -126,6 +126,15 @@ public class StoryModeManager : MonoBehaviour
         if (currentLineIndex < currentChapter.dialogueLines.Count)
         {
             DialogueLine line = currentChapter.dialogueLines[currentLineIndex];
+
+            if (string.IsNullOrEmpty(line.dialogueText))
+            {
+                // 沒有台詞可講：跳過後端 LLM/TTS，直接套用這句的效果（顯示/隱藏物件等）
+                // 並往下推進，讓場景可以在 AI 開口前先讓特定物件出現/消失。
+                ApplyLineEffectsAndAdvance(line, string.Empty);
+                return;
+            }
+
             RequestDialogueLine(line);
             // animator.SetTrigger(line.npcAnimationTrigger);
         }
@@ -186,6 +195,14 @@ public class StoryModeManager : MonoBehaviour
         lineBeingSpoken = null;
         lineBeingSpokenText = null;
 
+        ApplyLineEffectsAndAdvance(line, generatedText);
+    }
+
+    // Shared by both the normal "AI finished speaking this line" path
+    // (HandleLineSpeechCompleted) and the "dialogueText is empty, nothing to speak"
+    // path (PlayCurrentLine) — same show/hide/hint/advance behavior either way.
+    private void ApplyLineEffectsAndAdvance(DialogueLine line, string generatedText)
+    {
         if (line.objectsToShow != null)
             foreach (string tag in line.objectsToShow) OnShowObjectTag?.Invoke(tag);
         if (line.objectsToHide != null)

@@ -17,9 +17,15 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/keelong yangming scenes/YM Physical.unity
     guid: 9a78568597c6bea458271cbac5d0cb58
-  - enabled: 1
+  - enabled: 0
     path: "Assets/Scenes/\u6797/multiuser test.unity"
     guid: 876033dfc2a8f2e48946767264d56a43
+  - enabled: 0
+    path: Assets/Scenes/FireSeed_Test.unity
+    guid: 2b6a335afbca4cdcb0349896a5e49d94
+  - enabled: 1
+    path: Assets/Scenes/Sticker_Test.unity
+    guid: 6be6b7287ba69ea499be2df6a40746f1
   m_configObjects:
     com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: 5146df98c5d3d504a8d5e52063317a1c, type: 2}
     com.unity.xr.openxr.settings4: {fileID: 11400000, guid: 49b61d976769e444d958b122fd60c936, type: 2}

@@ -76,6 +76,7 @@ crashlytics-build.properties
 # 超過 100MB 的檔案
 /[Aa]ssets/Chinese Exhibits/exhibits/11-8k.png
 /Assets/Scenes/NotoSansTC-Medium SDF dynasty.asset
+/Assets/Chinese Exhibits/Game story models/Scene model/Meshy_AI_3d_realistic_and_anci_0730134524_texture.obj
 
 # 忽略 Claude Code 的暫存資料夾
 .claude/

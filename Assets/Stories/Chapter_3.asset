@@ -14,19 +14,57 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   chapterNumber: 4
   dialogueLines:
+  - speakerName: 
+    dialogueText: 
+    npcAnimationTrigger: 
+    startsFreeChat: 0
+    freeChatSuccessKeyword: 
+    freeChatAnswerKey: 
+    freeChatHint: 
+    requiresInteraction: 0
+    taskTextPlayer1: 
+    taskTextPlayer2: 
+    objectsToShow:
+    - Fire_Scene
+    objectsToHide: []
   - speakerName: "\u4E7E\u9686\u5E1D(\u611B\u65B0\u89BA\u7F85\xB7\u5F18\u66C6)"
     dialogueText: "\u5169\u500B\u73A9\u5BB6\u773C\u524D\u6703\u770B\u5230\u5169\u500B\u706B\u7A2E\u98C4\u6D6E\u5728\u7A7A\u4E2D\uFF0C\u73A9\u5BB6\u5011\u7684\u4EFB\u52D9\u662F\u5404\u81EA\u9EDE\u4EAE\u4E00\u500B\u706B\u7A2E\uFF0C\u5F85\u6EAB\u5EA6\u5230\u9054\u4E00\u5B9A\u7A0B\u5EA6\u6642\uFF0C\u5C31\u6210\u529F\u5B8C\u6210\u4EFB\u52D9\u3002\u4E0A\u9762\u5167\u5BB9\u662F\u63A5\u4E0B\u4F86\u73A9\u5BB6\u7684\u4EFB\u52D9\u74B0\u7BC0\uFF0C\u4F60\u8981\u6839\u64DA\u63A5\u4E0B\u4F86\u7684\u74B0\u7BC0\u548C\u73A9\u5BB6\u8AAA\u660E\u3001\u4ECB\u7D39\u63A5\u4E0B\u4F86\u7684\u4EFB\u52D9\u5167\u5BB9\u3002\u7BC4\u4F8B\u53F0\u8A5E\uFF1A\u300C\u4F60\u5011\u7684\u4EFB\u52D9\u662F\u5C07\u706B\u7A2E\u9EDE\u4EAE\uFF0C\u4E26\u4E14\u8B93\u84EE\u82B1\u6EAB\u7897\u6210\u529F\u51FA\u7210...\u9019\u500B\u4EFB\u52D9\u8003\u9A57\u7684\u662F\u4F60\u5011\u7684\u5718\u968A\u9ED8\u5951\uFF0C\u5B8C\u6210\u4EFB\u52D9\u5F8C\u624D\u53EF\u4EE5...\uFF0C\u82E5\u5931\u6557\u4E86\uFF0C\u5C07\u6703\u9020\u6210\u7121\u6CD5\u633D\u56DE\u7684\u56B4\u91CD\u5F8C\u679C\uFF01\u795D\u4F60\u5011\u9806\u5229\uFF0C\u6210\u6557\u5C31\u5728\u6B64\u4E00\u8209\u4E86\uFF01\u300D"
     npcAnimationTrigger: 
     startsFreeChat: 0
     freeChatSuccessKeyword: 
+    freeChatAnswerKey: 
+    freeChatHint: 
     requiresInteraction: 1
-    objectsToShow: []
+    taskTextPlayer1: 
+    taskTextPlayer2: 
+    objectsToShow:
+    - BurnProgressSlider
+    - Fire_Text
     objectsToHide: []
+  - speakerName: 
+    dialogueText: 
+    npcAnimationTrigger: 
+    startsFreeChat: 0
+    freeChatSuccessKeyword: 
+    freeChatAnswerKey: 
+    freeChatHint: 
+    requiresInteraction: 0
+    taskTextPlayer1: 
+    taskTextPlayer2: 
+    objectsToShow: []
+    objectsToHide:
+    - BurnProgressSlider
+    - Fire_Text
   - speakerName: "\u4E7E\u9686\u5E1D(\u611B\u65B0\u89BA\u7F85\xB7\u5F18\u66C6)"
     dialogueText: "\u53EF\u4EE5\u8F38\u51FA\u53F0\u8A5E\u4F8B\u5982\uFF1A\u300C\u6210\u529F\u4E86\uFF01\u84EE\u82B1\u6EAB\u7897\u5373\u5C07\u51FA\u7210\u4E86\uFF01\u300D\uFF0C\u4F46\u5E0C\u671B\u53EF\u4EE5\u66F4\u9577\u4E14\u60C5\u7DD2\u66F4\u8C50\u5BCC"
     npcAnimationTrigger: 
     startsFreeChat: 0
     freeChatSuccessKeyword: 
+    freeChatAnswerKey: 
+    freeChatHint: 
     requiresInteraction: 0
+    taskTextPlayer1: 
+    taskTextPlayer2: 
     objectsToShow: []
-    objectsToHide: []
+    objectsToHide:
+    - Fire_Scene

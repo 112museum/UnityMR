@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 #if WINDOWS_UWP
-using UnityEngine.XR.WSA.WebCam;
+
 #endif
 
 // 第四幕結尾「大合照」（需求書 UC006 步驟1-5，不含信箱寄送——那段要等團隊決定要不要做）。
@@ -32,7 +32,7 @@ public class GroupPhotoCapture : MonoBehaviour
     private bool _isCapturing;
 
 #if WINDOWS_UWP
-    private PhotoCapture _photoCapture;
+    private UnityEngine.Windows.WebCam.PhotoCapture _photoCapture;
 #endif
 
     // 把這個方法掛到「拍照」按鈕的 On Click()，或在貼紙裝飾流程結束後直接呼叫
@@ -43,7 +43,7 @@ public class GroupPhotoCapture : MonoBehaviour
 #if WINDOWS_UWP
         _isCapturing = true;
         onPhotoStarting?.Invoke();
-        PhotoCapture.CreateAsync(showHolograms: true, OnPhotoCaptureCreated);
+        UnityEngine.Windows.WebCam.PhotoCapture.CreateAsync(showHolograms: true, OnPhotoCaptureCreated);
 #else
         Debug.Log("[GroupPhotoCapture] 目前平台不是 UWP/HoloLens，略過實際拍照（Editor 測試用）。");
         onPhotoStarting?.Invoke();
@@ -52,26 +52,26 @@ public class GroupPhotoCapture : MonoBehaviour
     }
 
 #if WINDOWS_UWP
-    private void OnPhotoCaptureCreated(PhotoCapture captureObject)
+    private void OnPhotoCaptureCreated(UnityEngine.Windows.WebCam.PhotoCapture captureObject)
     {
         _photoCapture = captureObject;
 
-        Resolution cameraResolution = PhotoCapture.SupportedResolutions
+        Resolution cameraResolution = UnityEngine.Windows.WebCam.PhotoCapture.SupportedResolutions
             .OrderByDescending(res => res.width * res.height)
             .First();
 
-        var cameraParameters = new CameraParameters
+        var cameraParameters = new UnityEngine.Windows.WebCam.CameraParameters
         {
             hologramOpacity = 1.0f,
             cameraResolutionWidth = cameraResolution.width,
             cameraResolutionHeight = cameraResolution.height,
-            pixelFormat = CapturePixelFormat.BGRA32
+            pixelFormat = UnityEngine.Windows.WebCam.CapturePixelFormat.BGRA32
         };
 
         _photoCapture.StartPhotoModeAsync(cameraParameters, OnPhotoModeStarted);
     }
 
-    private void OnPhotoModeStarted(PhotoCapture.PhotoCaptureResult result)
+    private void OnPhotoModeStarted(UnityEngine.Windows.WebCam.PhotoCapture.PhotoCaptureResult result)
     {
         if (!result.success)
         {
@@ -82,11 +82,11 @@ public class GroupPhotoCapture : MonoBehaviour
         string fileName = $"重塑天青_大合照_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
         string filePath = Path.Combine(Application.persistentDataPath, fileName);
 
-        _photoCapture.TakePhotoAsync(filePath, PhotoCaptureFileOutputFormat.JPG,
+        _photoCapture.TakePhotoAsync(filePath, UnityEngine.Windows.WebCam.PhotoCaptureFileOutputFormat.JPG,
             (photoResult) => OnPhotoSaved(photoResult, filePath));
     }
 
-    private void OnPhotoSaved(PhotoCapture.PhotoCaptureResult result, string filePath)
+    private void OnPhotoSaved(UnityEngine.Windows.WebCam.PhotoCapture.PhotoCaptureResult result, string filePath)
     {
         if (!result.success)
         {

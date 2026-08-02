@@ -81,5 +81,11 @@ crashlytics-build.properties
 # 忽略 Claude Code 的暫存資料夾
 .claude/
 
+# QR 掃描除錯用截圖（ColorVisionQRScanner 按 D 存的，只在 Editor 用）
+/DebugCapture/
+
+# 丟給 AI 看的參考資料（文件、截圖、demo 影片），不進版控
+/丟給AI看/
+
 # macOS 系統產生的檔案
 .DS_Store

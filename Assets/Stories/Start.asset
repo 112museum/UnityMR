@@ -23,5 +23,10 @@ MonoBehaviour:
     npcAnimationTrigger: 
     startsFreeChat: 0
     freeChatSuccessKeyword: 
+    freeChatAnswerKey: 
+    freeChatHint: 
     requiresInteraction: 0
-  targetInteractivity: 
+    taskTextPlayer1: 
+    taskTextPlayer2: 
+    objectsToShow: []
+    objectsToHide: []

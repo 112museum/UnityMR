@@ -1,20 +1,29 @@
 using Photon.Pun;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 // 第二幕「瑪瑙入釉」調色盤：掛在調色盤 UI 的固定場景物件上，該物件需要有 PhotonView 元件
 // （場景內固定擺放即可，不需要 PhotonNetwork.Instantiate）。
 // 色票按鈕的 On Click() 綁定 SelectColor(index)：任一位玩家點選色票，都會透過 RPC 廣播給雙方，
-// 讓兩人看到同一個正在變化的碗（所見即所得）；targetRenderers 同時放「碗本體」與「面板預覽模型」，
-// 兩者就會一起換色。「確認」按鈕綁定 ConfirmSelection()，鎖定顏色並觸發 onColorConfirmed
-// （接後續轉場，例如推進 StoryModeManager 到第三幕）。
+// 讓兩人看到同一個正在變化的「面板預覽碗」（所見即所得），但真正的碗本體這時還不會變色，
+// 只是玩家在試色。「確認」按鈕綁定 ConfirmSelection()：把目前選到的顏色套到真正的碗本體、
+// 鎖定顏色，並觸發 onColorConfirmed（接後續轉場，例如推進 StoryModeManager 到第三幕）。
+// 面板預覽碗不需要互動，用平面示意圖即可：把碗的線稿/剪影圖（白色或灰階，才能被染色）
+// 做成 UI Image，拖進 previewImages，選色時會直接改 Image.color，不需要 3D 模型。
 public class GlazeColorPalette : MonoBehaviourPun
 {
     [Header("調色盤色票（依序對應面板上的色票按鈕，SelectColor 用索引指定）")]
     public Color[] paletteColors;
 
-    [Header("要套色的碗（素坯本體＋面板預覽模型都放進來）")]
-    public Renderer[] targetRenderers;
+    [Header("面板預覽模型（3D，選色時即時換色，尚未確認）")]
+    public Renderer[] previewRenderers;
+
+    [Header("面板預覽圖示（2D UI Image，選色時即時換色，尚未確認）")]
+    public Image[] previewImages;
+
+    [Header("真正的碗本體（按下確認後才套色；若碗是場景中動態生成的，改用 RegisterActualBowl() 註冊，這裡留空即可）")]
+    public Renderer[] actualRenderers;
 
     [Header("確認選色後觸發（推進劇情用）")]
     public UnityEvent onColorConfirmed;
@@ -22,27 +31,31 @@ public class GlazeColorPalette : MonoBehaviourPun
     public int SelectedIndex { get; private set; } = -1;
     public bool IsConfirmed { get; private set; }
 
-    private Material[][] _materialInstances;
+    private Material[][] _previewMaterialInstances;
+    private Material[][] _actualMaterialInstances;
 
     private void Start()
     {
-        CacheMaterials();
+        _previewMaterialInstances = CacheMaterials(previewRenderers);
+        _actualMaterialInstances = CacheMaterials(actualRenderers);
     }
 
     // Renderer.materials 存取時會自動幫每個 Renderer 建立獨立的材質實例，
     // 改色才不會牽動到其他共用同一份 sharedMaterial 的物件
-    private void CacheMaterials()
+    private static Material[][] CacheMaterials(Renderer[] renderers)
     {
-        int count = targetRenderers != null ? targetRenderers.Length : 0;
-        _materialInstances = new Material[count][];
+        int count = renderers != null ? renderers.Length : 0;
+        var result = new Material[count][];
 
         for (int i = 0; i < count; i++)
         {
-            var rend = targetRenderers[i];
+            var rend = renderers[i];
             if (rend == null) continue;
 
-            _materialInstances[i] = rend.materials;
+            result[i] = rend.materials;
         }
+
+        return result;
     }
 
     // 把這個方法掛到每個色票按鈕的 On Click()，colorIndex 對應 paletteColors 的索引
@@ -52,6 +65,20 @@ public class GlazeColorPalette : MonoBehaviourPun
         if (paletteColors == null || colorIndex < 0 || colorIndex >= paletteColors.Length) return;
 
         photonView.RPC(nameof(RpcApplyColor), RpcTarget.All, colorIndex);
+    }
+
+    // 給動態生成的碗 prefab 呼叫（例如掛在該 prefab 上的腳本在 Start() 呼叫），
+    // 讓調色盤知道「真正的碗」現在是哪個 instance。如果玩家早就按過確認，
+    // 這裡會立刻把已選定的顏色補套上去，不用管碗跟確認動作誰先誰後。
+    public void RegisterActualBowl(Renderer[] renderers)
+    {
+        actualRenderers = renderers;
+        _actualMaterialInstances = CacheMaterials(actualRenderers);
+
+        if (IsConfirmed && SelectedIndex >= 0)
+        {
+            ApplyColorToTargets(_actualMaterialInstances, paletteColors[SelectedIndex]);
+        }
     }
 
     // 把這個方法掛到「確認」按鈕的 On Click()
@@ -67,25 +94,28 @@ public class GlazeColorPalette : MonoBehaviourPun
     private void RpcApplyColor(int colorIndex)
     {
         SelectedIndex = colorIndex;
-        ApplyColorToTargets(paletteColors[colorIndex]);
+        Color color = paletteColors[colorIndex];
+        ApplyColorToTargets(_previewMaterialInstances, color);
+        ApplyColorToImages(color);
     }
 
     [PunRPC]
     private void RpcConfirm()
     {
         IsConfirmed = true;
+        ApplyColorToTargets(_actualMaterialInstances, paletteColors[SelectedIndex]);
         onColorConfirmed?.Invoke();
     }
 
-    private void ApplyColorToTargets(Color color)
+    private static void ApplyColorToTargets(Material[][] materialInstances, Color color)
     {
-        if (_materialInstances == null) return;
+        if (materialInstances == null) return;
 
-        for (int i = 0; i < _materialInstances.Length; i++)
+        for (int i = 0; i < materialInstances.Length; i++)
         {
-            if (_materialInstances[i] == null) continue;
+            if (materialInstances[i] == null) continue;
 
-            foreach (Material mat in _materialInstances[i])
+            foreach (Material mat in materialInstances[i])
             {
                 if (mat.HasProperty("_Color"))
                 {
@@ -96,6 +126,17 @@ public class GlazeColorPalette : MonoBehaviourPun
                     mat.SetColor("_BaseColor", color);
                 }
             }
+        }
+    }
+
+    private void ApplyColorToImages(Color color)
+    {
+        if (previewImages == null) return;
+
+        foreach (Image img in previewImages)
+        {
+            if (img == null) continue;
+            img.color = color;
         }
     }
 }

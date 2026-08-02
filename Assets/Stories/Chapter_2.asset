@@ -63,6 +63,6 @@ MonoBehaviour:
     requiresInteraction: 0
     taskTextPlayer1: 
     taskTextPlayer2: 
-    objectsToShow: []
-    objectsToHide:
-    - FreeChat_Button
+    objectsToShow:
+    - SwitchColor_Canva
+    objectsToHide: []

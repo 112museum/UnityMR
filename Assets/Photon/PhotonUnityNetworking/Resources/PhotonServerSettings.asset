@@ -50,6 +50,7 @@ MonoBehaviour:
   - RpcConfirm
   - RequestDestroy
   - RpcAdvanceStage
+  - RpcApplyToBowl
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 0

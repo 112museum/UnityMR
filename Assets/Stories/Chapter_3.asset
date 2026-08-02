@@ -63,6 +63,18 @@ MonoBehaviour:
     freeChatAnswerKey: 
     freeChatHint: 
     requiresInteraction: 0
+    taskTextPlayer1: "\u8ACB\u5C07\u6EAB\u7897\u53D6\u51FA\u7F6E\u65BC\u684C\u4E0A"
+    taskTextPlayer2: "\u8ACB\u5C07\u6EAB\u7897\u53D6\u51FA\u7F6E\u65BC\u684C\u4E0A"
+    objectsToShow: []
+    objectsToHide: []
+  - speakerName: 
+    dialogueText: 
+    npcAnimationTrigger: 
+    startsFreeChat: 0
+    freeChatSuccessKeyword: 
+    freeChatAnswerKey: 
+    freeChatHint: 
+    requiresInteraction: 0
     taskTextPlayer1: 
     taskTextPlayer2: 
     objectsToShow: []

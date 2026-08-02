@@ -52,8 +52,13 @@ public class ColorVisionQRScanner : MonoBehaviour
     private float _nextHeartbeatAt;
     private int _framesTried;
 
-    private void Start()
+    // OnEnable (not Start) so re-opening QRScanPanel after a cancelled/failed attempt
+    // actually restarts the camera — Start() only ever runs once per object lifetime,
+    // it wouldn't fire again on a second SetActive(true).
+    private void OnEnable()
     {
+        scanCompleted = false;
+
         // Fixed, modest resolution: faster to decode every frame, and plenty for a small
         // 2-character QR code — no reason to drag a full native-res frame through ZXing.
         backCam = new WebCamTexture(640, 480, 30);
@@ -68,6 +73,20 @@ public class ColorVisionQRScanner : MonoBehaviour
         if (statusText != null)
         {
             statusText.text = "請將色覺測驗結果的 QR code 對準鏡頭";
+        }
+    }
+
+    // Mirrors OnDestroy below — this is what actually releases the camera when the panel
+    // is closed via SetActive(false) (success or cancel), not just when the object is
+    // destroyed. Without this, a "取消" button that only hides the panel would leave
+    // backCam running in the background, still holding the physical camera.
+    private void OnDisable()
+    {
+        camAvailable = false;
+
+        if (backCam != null && backCam.isPlaying)
+        {
+            backCam.Stop();
         }
     }
 
@@ -177,38 +196,18 @@ public class ColorVisionQRScanner : MonoBehaviour
 
     private void TryApplyCode(string code)
     {
-        ColorBlindFilterToggle.ColorBlindType? type = code[0] switch
-        {
-            'A' => ColorBlindFilterToggle.ColorBlindType.Normal,
-            'B' => ColorBlindFilterToggle.ColorBlindType.Protanomalous,
-            'C' => ColorBlindFilterToggle.ColorBlindType.Deuteranomalous,
-            'D' => ColorBlindFilterToggle.ColorBlindType.Tritanomalous,
-            _ => null,
-        };
-
-        if (type == null)
-        {
-            Debug.LogWarning($"[ColorVisionQRScanner] 掃到 QR 但內容格式不對：\"{code}\"");
-            return;
-        }
-
-        string severity = type == ColorBlindFilterToggle.ColorBlindType.Normal
-            ? "normal"
-            : code.Length > 1 ? code[1] switch
-            {
-                '1' => "severe",
-                '2' => "moderate",
-                '3' => "mild",
-                _ => "",
-            } : "";
-
         if (ColorBlindFilterToggle.Instance == null)
         {
             Debug.LogError("[ColorVisionQRScanner] 場景裡找不到 ColorBlindFilterToggle，掃描結果無法儲存。");
             return;
         }
 
-        ColorBlindFilterToggle.Instance.SetDetectedType(type.Value, severity);
+        if (!ColorBlindFilterToggle.Instance.ApplyCode(code))
+        {
+            Debug.LogWarning($"[ColorVisionQRScanner] 掃到 QR 但內容格式不對：\"{code}\"");
+            return;
+        }
+
         scanCompleted = true;
 
         if (backCam.isPlaying) backCam.Stop();

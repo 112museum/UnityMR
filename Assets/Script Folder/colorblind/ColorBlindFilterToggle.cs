@@ -75,17 +75,64 @@ public class ColorBlindFilterToggle : MonoBehaviour
         Debug.Log($"[ColorBlindFilterToggle] 測驗結果：{detectedType} / {severity}（尚未套用，等第二幕開場）");
     }
 
+    // Button.OnClick() 的下拉選單只列得出回傳 void 的方法，ApplyCode 為了讓呼叫端能判斷
+    // 代碼格式對不對而回傳 bool，所以按鈕綁不到——這個 void 包裝專門給 On Click() 用，
+    // 字串參數填 "B2"／"C1"／"D3" 之類的代碼即可模擬掃描結果，不用真的印一張 QR 出來測。
+    public void ApplyCodeFromButton(string code) => ApplyCode(code);
+
+    // 跟 ColorVisionQRScanner.TryApplyCode 共用同一份「兩碼格式」解析邏輯，讓真的掃 QR
+    // 跟手動測試走的是同一段程式碼。回傳 false 代表代碼格式不對，沒有套用；程式呼叫
+    // （例如 ColorVisionQRScanner）可以用這個回傳值判斷，UI 按鈕請改綁 ApplyCodeFromButton。
+    public bool ApplyCode(string code)
+    {
+        if (string.IsNullOrEmpty(code)) return false;
+
+        ColorBlindType? type = code[0] switch
+        {
+            'A' => ColorBlindType.Normal,
+            'B' => ColorBlindType.Protanomalous,
+            'C' => ColorBlindType.Deuteranomalous,
+            'D' => ColorBlindType.Tritanomalous,
+            _ => null,
+        };
+
+        if (type == null) return false;
+
+        string severity = type == ColorBlindType.Normal
+            ? "normal"
+            : code.Length > 1 ? code[1] switch
+            {
+                '1' => "severe",
+                '2' => "moderate",
+                '3' => "mild",
+                _ => "",
+            } : "";
+
+        SetDetectedType(type.Value, severity);
+        return true;
+    }
+
     // 掛給 ColorBlindChapterTrigger：第二幕開場的 tag 觸發時呼叫。
     // 玩家測出來是 Normal（QR 代碼 A）或根本沒掃過 QR 的話，不套濾鏡。
     public void ActivateFromChapter2()
     {
-        if (isFilterOn) return;
-        if (!hasDetectedType || detectedType == ColorBlindType.Normal) return;
+        if (isFilterOn)
+        {
+            Debug.Log("[ColorBlindFilterToggle] ActivateFromChapter2() 被呼叫，但濾鏡已經是開啟狀態，略過。");
+            return;
+        }
+
+        if (!hasDetectedType || detectedType == ColorBlindType.Normal)
+        {
+            Debug.Log($"[ColorBlindFilterToggle] ActivateFromChapter2() 被呼叫，但沒有套用濾鏡（hasDetectedType={hasDetectedType}, detectedType={detectedType}）。");
+            return;
+        }
 
         ApplyMultipliers();
         ApplyToTargets(true);
         isFilterOn = true;
         UpdateButtonLabel();
+        Debug.Log($"[ColorBlindFilterToggle] 濾鏡已套用：type={detectedType}, intensity={intensity}, targets={targetRenderers?.Length ?? 0}");
     }
 
     // 舊名稱別名——Assets/Scenes/張/Rose Seman.unity 裡已經有顆按鈕的 On Click() 綁的是

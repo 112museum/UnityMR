@@ -6,9 +6,6 @@ using System.Text.Json.Serialization;
 
 public class NPCRequestManager : MonoBehaviour
 {
-    [Header("Backend Config")]
-    public string backendUrl = "http://192.168.0.76:5050";
-
     [Header("NPC Config")]
     public string npc_role = "白起";
     public string personality = "introvert";
@@ -31,7 +28,7 @@ public class NPCRequestManager : MonoBehaviour
 
     void InitializeSocket()
     {
-        var uri = new Uri(backendUrl);
+        var uri = new Uri(BackendConfig.Url);
         socket = new SocketIOUnity(uri, new SocketIOOptions
         {
             Transport = SocketIOClient.Transport.TransportProtocol.WebSocket

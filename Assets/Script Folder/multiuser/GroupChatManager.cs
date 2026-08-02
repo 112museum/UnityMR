@@ -12,9 +12,6 @@ public class GroupChatManager : MonoBehaviour, IOnEventCallback
 {
     public static GroupChatManager Instance { get; private set; }
 
-    [Header("Backend Config")]
-    public string backendUrl = "http://192.168.0.76:5050";
-
     [Header("Player Config")]
     private string userName;
     public string UserName => userName;
@@ -93,7 +90,7 @@ public class GroupChatManager : MonoBehaviour, IOnEventCallback
 
     void InitializeSocket()
     {
-        var uri = new Uri(backendUrl);
+        var uri = new Uri(BackendConfig.Url);
         socket = new SocketIOUnity(uri, new SocketIOOptions
         {
             Transport = SocketIOClient.Transport.TransportProtocol.WebSocket

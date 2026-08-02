@@ -9,7 +9,7 @@ using UnityEngine.UI;
 // 玩家填了才把照片寄出；不填（或按跳過）就直接把剛拍好的照片檔案刪掉，不留檔。
 //
 // 寄信這件事沒辦法在 HoloLens/Unity 端直接做，所以沿用 StoryPromptManager/
-// GroupChatManager 已經在用的同一台 Socket.IO 後端 (backendUrl)，新增一個
+// GroupChatManager 已經在用的同一台 Socket.IO 後端 (BackendConfig.Url)，新增一個
 // "send_group_photo" 事件，把信箱 + 照片(base64) 丟給後端，由後端在伺服器端寄信。
 // 這支腳本能動，還需要後端那邊補上 send_group_photo 的處理邏輯（收到後寄信，
 // 完成/失敗時回丟 "photo_email_sent" / "photo_email_failed"）。
@@ -17,9 +17,6 @@ public class GroupPhotoEmailPrompt : MonoBehaviour
 {
     [Header("依賴")]
     public GroupPhotoCapture photoCapture;
-
-    [Header("Backend Config（沿用 story/chat 用的同一台後端）")]
-    public string backendUrl = "http://192.168.0.76:5050";
 
     [Header("UI")]
     public GameObject emailPanel;
@@ -33,7 +30,7 @@ public class GroupPhotoEmailPrompt : MonoBehaviour
 
     private void Awake()
     {
-        var uri = new Uri(backendUrl);
+        var uri = new Uri(BackendConfig.Url);
         socket = new SocketIOUnity(uri, new SocketIOOptions
         {
             Transport = SocketIOClient.Transport.TransportProtocol.WebSocket

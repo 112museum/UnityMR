@@ -203,9 +203,15 @@ public class ColorBlindFilterToggle : MonoBehaviour
                 mat.SetFloat("_BlueMultiplier", blueMultiplier);
 
                 // 學姊的 Shader 用 texcoord(0~1) * 640 / 480 跟 _Rect 比對決定要不要套用增強，
-                // 設成 (0,0,640,480) 等同於涵蓋整個 0~1 UV 範圍，也就是整個物件表面都套用
+                // 設成 (0,0,640,480) 等同於涵蓋整個 0~1 UV 範圍，也就是整個物件表面都套用。
+                // 原本 shader 設計是兩個「各自獨立的物件」bounding box（來自舊版 YOLO 偵測，通常
+                // 不重疊），frag() 對 Rect1、Rect2 各自用 if（不是 else if）判斷、各自疊乘一次。
+                // 這裡如果把 _Rect2 也設成跟 _Rect1 一樣的全範圍，等於每個像素兩個 if 都會成立，
+                // RGB 倍率會被乘兩次（等同 intensity 平方），顏色會比 Inspector 上設的 intensity
+                // 強烈很多，嚴重程度的三個級距也會被這個平方關係打亂。_Rect2 留一個「不可能成立」
+                // 的退化 rect（min==max，嚴格不等式恆假）等於停用第二個判斷，只留 _Rect1 這一次套用。
                 mat.SetVector("_Rect1", new Vector4(0, 0, 640, 480));
-                mat.SetVector("_Rect2", new Vector4(0, 0, 640, 480));
+                mat.SetVector("_Rect2", new Vector4(0, 0, 0, 0));
             }
         }
     }

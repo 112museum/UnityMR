@@ -32,4 +32,7 @@ MonoBehaviour:
     startsFreeChat: 0
     freeChatSuccessKeyword:
     requiresInteraction: 0
+    objectsToShow:
+    - GroupPhotoTrigger
+    objectsToHide: []
   targetInteractivity:

@@ -2,17 +2,25 @@ using UnityEngine;
 using TMPro;
 
 // 掛在任意 GameObject 上皆可（不再需要 Camera 元件——不是全螢幕後製，是改指定物件的材質）。
-// Button 的 OnClick() 綁定 ToggleFilter()：第一下開啟濾鏡、第二下關閉。
 // 只會改變 targetRenderers 裡指定的物件（例如展品、調色盤）的材質，不影響畫面其他部分，
 // 因為 HoloLens 是光學透視、看得到真實世界，全螢幕後製也碰不到真實物件，不如直接限定範圍。
+//
+// 類型不再讓玩家自己選——大部分色弱者其實不知道自己是哪個亞型。改成跟著學姊的流程走：
+// 玩家事先在外部評估網站做色覺測驗（Cambridge Color Vision Test 架構），測驗結果連同 QR code
+// 由 ColorVisionQRScanner 掃描解碼後呼叫 SetDetectedType() 存起來；接著在第二幕開場時由
+// ColorBlindChapterTrigger（訂閱 StoryModeManager.OnShowObjectTag）呼叫 ActivateFromChapter2()
+// 才真正套用濾鏡，並持續到體驗結束，除非玩家自己用 ManualToggle() 關掉。
 public class ColorBlindFilterToggle : MonoBehaviour
 {
     public enum ColorBlindType
     {
-        Protanomalous,   // 紅色弱
-        Deuteranomalous, // 綠色弱
-        Tritanomalous    // 藍色弱
+        Normal,          // 對應 QR 代碼 A，色覺正常，不需要矯正
+        Protanomalous,   // 紅色弱，對應 QR 代碼 B
+        Deuteranomalous, // 綠色弱，對應 QR 代碼 C
+        Tritanomalous    // 藍色弱，對應 QR 代碼 D
     }
+
+    public static ColorBlindFilterToggle Instance { get; private set; }
 
     [Header("要套用色弱濾鏡的物件（例如展品、調色盤）")]
     public Renderer[] targetRenderers;
@@ -20,20 +28,22 @@ public class ColorBlindFilterToggle : MonoBehaviour
     [Header("套用濾鏡用的 Shader（留空會自動用 Custom/NewSurfaceShader）")]
     public Shader colorBlindShader;
 
-    [Header("色盲類型與強度")]
-    public ColorBlindType type = ColorBlindType.Deuteranomalous;
     [Range(1f, 2f)]
     public float intensity = 1.3f; // 對應學姊原本 factor: 1.15 輕度 / 1.3 中度 / 1.5 重度
 
     [Header("按鈕文字（可選，用來顯示目前開/關狀態）")]
     public TMP_Text buttonLabel;
 
-    [Header("型別選擇面板（按下開啟濾鏡時彈出，讓玩家選色盲類型；面板上三顆按鈕的 OnClick() 各自綁 SelectType(int)，0=Protanomalous/1=Deuteranomalous/2=Tritanomalous，順序需對應上面 enum）")]
-    public GameObject typeSelectionPanel;
-
     private bool isFilterOn = false;
+    private bool hasDetectedType = false; // 玩家掃過 QR、確實拿到測驗結果了嗎
+    private ColorBlindType detectedType = ColorBlindType.Normal;
     private Material[][] _originalMaterials;
     private Material[][] _tintedMaterials;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     private void Start()
     {
@@ -44,11 +54,66 @@ public class ColorBlindFilterToggle : MonoBehaviour
 
         CacheMaterials();
         UpdateButtonLabel();
+    }
 
-        if (typeSelectionPanel != null)
+    // 掛給 ColorVisionQRScanner：QR 解碼出玩家的色覺類型與程度後呼叫這個存起來。
+    // 只是記錄，不會馬上套濾鏡——濾鏡要等第二幕開場（ActivateFromChapter2）才開。
+    // severity 對應學姊原本 QRScanner 解出來的 level 字串："severe"/"moderate"/"mild"。
+    public void SetDetectedType(ColorBlindType type, string severity)
+    {
+        detectedType = type;
+        hasDetectedType = true;
+
+        intensity = severity switch
         {
-            typeSelectionPanel.SetActive(false);
+            "severe" => 1.5f,
+            "moderate" => 1.3f,
+            "mild" => 1.15f,
+            _ => intensity,
+        };
+
+        Debug.Log($"[ColorBlindFilterToggle] 測驗結果：{detectedType} / {severity}（尚未套用，等第二幕開場）");
+    }
+
+    // 掛給 ColorBlindChapterTrigger：第二幕開場的 tag 觸發時呼叫。
+    // 玩家測出來是 Normal（QR 代碼 A）或根本沒掃過 QR 的話，不套濾鏡。
+    public void ActivateFromChapter2()
+    {
+        if (isFilterOn) return;
+        if (!hasDetectedType || detectedType == ColorBlindType.Normal) return;
+
+        ApplyMultipliers();
+        ApplyToTargets(true);
+        isFilterOn = true;
+        UpdateButtonLabel();
+    }
+
+    // 舊名稱別名——Assets/Scenes/張/Rose Seman.unity 裡已經有顆按鈕的 On Click() 綁的是
+    // ToggleFilter()，保留這個名字避免那顆按鈕失效。新的地方請直接綁 ManualToggle()。
+    public void ToggleFilter() => ManualToggle();
+
+    // 掛給玩家手動開關（例如場景裡的一顆按鈕）的 On Click()。
+    // 關閉時直接關掉；重新打開則沿用同一組測驗結果（不會再跳自選面板）。
+    public void ManualToggle()
+    {
+        if (isFilterOn)
+        {
+            isFilterOn = false;
+            ApplyToTargets(false);
+            UpdateButtonLabel();
+            return;
         }
+
+        if (!hasDetectedType || detectedType == ColorBlindType.Normal)
+        {
+            Debug.LogWarning("[ColorBlindFilterToggle] 還沒有測驗結果可套用，先完成 QR 掃描。");
+            return;
+        }
+
+        ApplyMultipliers();
+        ApplyToTargets(true);
+        isFilterOn = true;
+        UpdateButtonLabel();
     }
 
     // 幫每個目標物件各自準備一份「濾鏡材質」，保留該物件原本的貼圖(_MainTex)，
@@ -105,55 +170,13 @@ public class ColorBlindFilterToggle : MonoBehaviour
         return tex;
     }
 
-    // 把這個方法掛到「開啟/關閉濾鏡」Button 的 On Click()。
-    // 關閉時型別已經知道了，直接關掉不用重問；開啟時要先跳出型別選擇面板，
-    // 玩家選了之後才真的套用濾鏡（見 SelectType）。
-    public void ToggleFilter()
-    {
-        if (isFilterOn)
-        {
-            isFilterOn = false;
-            ApplyToTargets(false);
-            UpdateButtonLabel();
-            return;
-        }
-
-        if (typeSelectionPanel != null)
-        {
-            typeSelectionPanel.SetActive(true);
-        }
-        else
-        {
-            // 沒接面板就退回舊行為：直接用 Inspector 上設定的 type 開啟，方便單獨測試這顆 script。
-            SelectType(type);
-        }
-    }
-
-    // 掛到型別選擇面板上三顆按鈕的 On Click()，依 enum 順序傳 0/1/2。
-    public void SelectType(int typeIndex) => SelectType((ColorBlindType)typeIndex);
-
-    public void SelectType(ColorBlindType selectedType)
-    {
-        type = selectedType;
-        isFilterOn = true;
-
-        ApplyMultipliers();
-        ApplyToTargets(true);
-        UpdateButtonLabel();
-
-        if (typeSelectionPanel != null)
-        {
-            typeSelectionPanel.SetActive(false);
-        }
-    }
-
     private void ApplyMultipliers()
     {
         float redMultiplier = 1f;
         float greenMultiplier = 1f;
         float blueMultiplier = 1f;
 
-        switch (type)
+        switch (detectedType)
         {
             case ColorBlindType.Protanomalous:
                 redMultiplier = intensity;

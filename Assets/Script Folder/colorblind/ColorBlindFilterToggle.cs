@@ -52,7 +52,6 @@ public class ColorBlindFilterToggle : MonoBehaviour
             colorBlindShader = Shader.Find("Custom/NewSurfaceShader");
         }
 
-        CacheMaterials();
         UpdateButtonLabel();
     }
 
@@ -128,6 +127,7 @@ public class ColorBlindFilterToggle : MonoBehaviour
             return;
         }
 
+        CacheMaterials();
         ApplyMultipliers();
         ApplyToTargets(true);
         isFilterOn = true;
@@ -157,14 +157,18 @@ public class ColorBlindFilterToggle : MonoBehaviour
             return;
         }
 
+        CacheMaterials();
         ApplyMultipliers();
         ApplyToTargets(true);
         isFilterOn = true;
         UpdateButtonLabel();
     }
 
-    // 幫每個目標物件各自準備一份「濾鏡材質」，保留該物件原本的貼圖(_MainTex)，
+    // 幫每個目標物件各自準備一份「濾鏡材質」，保留該物件「目前」的貼圖/顏色(_MainTex)，
     // 只是額外疊加 RGB 倍率，開關時直接整組換掉該 Renderer 的 sharedMaterials。
+    // 特意不在 Start() 就烤好快取，而是每次「即將開啟濾鏡」前才重新抓一次目前的
+    // sharedMaterials——這樣玩家在濾鏡開啟之前調色盤重新上的色，濾鏡才會跟著吃到，
+    // 而不是永遠套用 Start() 當下、最原始的那個顏色。
     private void CacheMaterials()
     {
         int count = targetRenderers != null ? targetRenderers.Length : 0;
@@ -182,39 +186,35 @@ public class ColorBlindFilterToggle : MonoBehaviour
             Material[] tinted = new Material[originals.Length];
             for (int m = 0; m < originals.Length; m++)
             {
-                Material tintedMat = new Material(colorBlindShader);
+                // HoloLens 用 Single Pass Instanced 立體渲染，shader 沒開 instancing 的話畫面在裝置上不會正確顯示
+                Material tintedMat = new Material(colorBlindShader) { enableInstancing = true };
                 if (originals[m] != null)
                 {
-                    // 有貼圖就直接複製；沒有貼圖(例如物件只設了純色，像測試用的色塊 Cube)
-                    // 的話，這顆 Shader 只讀 _MainTex，不會管原本材質是用 _Color(Built-in
-                    // Standard) 還是 _BaseColor(URP Lit) 存顏色，所以兩種都試著抓，抓到才能
-                    // 把純色烤成一張 1x1 貼圖，濾鏡開啟時才不會變回預設白色
-                    Texture mainTex = originals[m].mainTexture;
-                    if (mainTex == null)
+                    // 貼圖有就直接複製；沒有貼圖(例如測試用的純色色塊 Cube)就維持 Shader
+                    // 預設的白色貼圖。真正的顏色一律交給下面的 _Color 去乘——不管物件是
+                    // 用貼圖上色還是只在 material 上調了 _Color(Built-in Standard) /
+                    // _BaseColor(URP Lit)，濾鏡材質都能吃到「目前」實際顯示的顏色，
+                    // 而不是永遠只認貼圖、把手動調的顏色忽略掉。
+                    if (originals[m].mainTexture != null)
                     {
-                        if (originals[m].HasProperty("_Color"))
-                        {
-                            mainTex = MakeSolidTexture(originals[m].GetColor("_Color"));
-                        }
-                        else if (originals[m].HasProperty("_BaseColor"))
-                        {
-                            mainTex = MakeSolidTexture(originals[m].GetColor("_BaseColor"));
-                        }
+                        tintedMat.SetTexture("_MainTex", originals[m].mainTexture);
                     }
-                    tintedMat.SetTexture("_MainTex", mainTex);
+
+                    Color tint = Color.white;
+                    if (originals[m].HasProperty("_Color"))
+                    {
+                        tint = originals[m].GetColor("_Color");
+                    }
+                    else if (originals[m].HasProperty("_BaseColor"))
+                    {
+                        tint = originals[m].GetColor("_BaseColor");
+                    }
+                    tintedMat.SetColor("_Color", tint);
                 }
                 tinted[m] = tintedMat;
             }
             _tintedMaterials[i] = tinted;
         }
-    }
-
-    private static Texture2D MakeSolidTexture(Color color)
-    {
-        var tex = new Texture2D(1, 1);
-        tex.SetPixel(0, 0, color);
-        tex.Apply();
-        return tex;
     }
 
     private void ApplyMultipliers()

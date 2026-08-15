@@ -284,6 +284,7 @@ public class StoryModeManager : MonoBehaviour
     {
         // 當觸發了特定互動（例如上一題提到的：A 摸了某物件）
         // 呼叫此函式推進劇情
+        Debug.Log($"[StoryModeManager] OnPlayerInteractSuccess called, currentLineIndex was {currentLineIndex}");
         currentLineIndex++;
         PlayCurrentLine();
     }

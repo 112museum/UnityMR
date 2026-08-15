@@ -32,6 +32,14 @@ public class StickerDraggable : MonoBehaviour
     private void OnEnable()
     {
         _manipulator.selectExited.AddListener(HandleReleased);
+
+        // 貼紙面板打開的時機（劇情觸發）跟碗生成的時機（更早的章節）沒有保證的先後順序，
+        // 所以除了 BowlSpawnedForStickers.Start() 那次主動指派之外，貼紙自己被啟用時也補問一次
+        // 「現在有沒有已經生成的碗」——不管碗是先生成還是後生成，兩邊有一個成功指派就夠了。
+        if (bowlTarget == null && BowlSpawnedForStickers.CurrentBowl != null)
+        {
+            bowlTarget = BowlSpawnedForStickers.CurrentBowl;
+        }
     }
 
     private void OnDisable()

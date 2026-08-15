@@ -53,6 +53,7 @@ public class STTManager : MonoBehaviour
 
     private async void StartRecognition()
     {
+        SubtitleDisplayManager.Instance?.HideSubtitle();
         var npcChat = GetComponent<NPCChat>();
         if (npcChat != null) npcChat.StartChat();
 

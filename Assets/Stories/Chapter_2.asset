@@ -26,6 +26,7 @@ MonoBehaviour:
     taskTextPlayer2: 
     objectsToShow:
     - FreeChat_Button
+    - ColorBlindFilterOn
     objectsToHide: []
   - speakerName: "\u4E7E\u9686\u5E1D(\u611B\u65B0\u89BA\u7F85\xB7\u5F18\u66C6)"
     dialogueText: "\u8ACB\u56FA\u5B9A\u8F38\u51FA\u9019\u500B\u53F0\u8A5E\uFF1A\u300C\u6C5D\u7AAF\u5929\u9752\uFF0C\u7D55\u5728\u300E\u7AAF\u8B8A\u300F\u3002\u82E5\u60F3\u5728\u51FA\u7AAF\u90A3\u4E00\u523B\uFF0C\u5448\u73FE\u6EAB\u9152\u7897\u8868\u9762\u5982\u96E8\u904E\u5929\u6674\u3001\u5E36\u9EDE\u5FAE\u85CD\u7684\u300E\u5929\u9752\u300F\uFF0C\u800C\u975E\u6D41\u65BC\u4FD7\u6C23\u7684\u7FE0\u7DA0\uFF0C\u4F60\u5011\u8A8D\u70BA\u5728\u71D2\u88FD\u7684\u904E\u7A0B\u4E2D\uFF0C\u7210\u706B\u61C9\u8A72\u5982\u4F55\u63A7\u5236\uFF1F\u300D"
@@ -59,9 +60,9 @@ MonoBehaviour:
     freeChatSuccessKeyword: 
     freeChatAnswerKey: 
     freeChatHint: 
-    requiresInteraction: 0
-    taskTextPlayer1: 
-    taskTextPlayer2: 
-    objectsToShow: []
-    objectsToHide:
-    - FreeChat_Button
+    requiresInteraction: 1
+    taskTextPlayer1: "\u8ACB\u70BA\u4F60\u5011\u7684\u6EAB\u7897\u8ABF\u914D\u91C9\u6599\u984F\u8272\uFF01"
+    taskTextPlayer2: "\u8ACB\u70BA\u4F60\u5011\u7684\u6EAB\u7897\u8ABF\u914D\u91C9\u6599\u984F\u8272\uFF01"
+    objectsToShow:
+    - SwitchColor_Canva
+    objectsToHide: []

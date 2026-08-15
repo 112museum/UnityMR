@@ -30,6 +30,9 @@ public class GlazeColorPalette : MonoBehaviourPun
     [Header("確認選色後觸發（推進劇情用，這時碗本體還沒變色）")]
     public UnityEvent onColorConfirmed;
 
+    [Header("調色面板")]
+    [SerializeField] private GameObject switchColorCanvas;
+
     [Header("顏色真正套到碗本體後觸發")]
     public UnityEvent onColorAppliedToBowl;
 
@@ -120,6 +123,7 @@ public class GlazeColorPalette : MonoBehaviourPun
     private void RpcConfirm()
     {
         IsConfirmed = true;
+        if (switchColorCanvas != null) switchColorCanvas.SetActive(false);
         onColorConfirmed?.Invoke();
     }
 

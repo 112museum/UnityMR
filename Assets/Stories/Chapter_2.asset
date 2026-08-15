@@ -60,9 +60,9 @@ MonoBehaviour:
     freeChatSuccessKeyword: 
     freeChatAnswerKey: 
     freeChatHint: 
-    requiresInteraction: 0
-    taskTextPlayer1: 
-    taskTextPlayer2: 
+    requiresInteraction: 1
+    taskTextPlayer1: "\u8ACB\u70BA\u4F60\u5011\u7684\u6EAB\u7897\u8ABF\u914D\u91C9\u6599\u984F\u8272\uFF01"
+    taskTextPlayer2: "\u8ACB\u70BA\u4F60\u5011\u7684\u6EAB\u7897\u8ABF\u914D\u91C9\u6599\u984F\u8272\uFF01"
     objectsToShow:
     - SwitchColor_Canva
     objectsToHide: []

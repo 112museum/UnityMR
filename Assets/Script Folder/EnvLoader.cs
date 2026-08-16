@@ -7,14 +7,18 @@ public class EnvLoader : MonoBehaviour
 {
     public static Dictionary<string, string> env =
         new Dictionary<string, string>();
+    private static bool loaded = false;
 
     void Awake()
     {
         LoadEnv();
     }
 
-    void LoadEnv()
+    static void LoadEnv()
     {
+        if (loaded) return;
+        loaded = true;
+
         string path =
             Path.Combine(
                 Directory.GetParent(Application.dataPath).FullName,
@@ -46,6 +50,7 @@ public class EnvLoader : MonoBehaviour
 
     public static string Get(string key)
     {
+        LoadEnv();
         return env.ContainsKey(key)
             ? env[key]
             : null;

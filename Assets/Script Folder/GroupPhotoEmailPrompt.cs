@@ -1,20 +1,22 @@
 using System;
+using System.Collections;
 using System.IO;
-using SocketIOClient;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 
 // 接續 GroupPhotoCapture 做完的 UC006 步驟 6-7：拍完合照後跳出信箱輸入面板，
 // 玩家填了才把照片寄出；不填（或按跳過）就直接把剛拍好的照片檔案刪掉，不留檔。
 //
-// 寄信這件事沒辦法在 HoloLens/Unity 端直接做，所以沿用 StoryPromptManager/
-// GroupChatManager 已經在用的同一台 Socket.IO 後端 (BackendConfig.Url)，新增一個
-// "send_group_photo" 事件，把信箱 + 照片(base64) 丟給後端，由後端在伺服器端寄信。
-// 這支腳本能動，還需要後端那邊補上 send_group_photo 的處理邏輯（收到後寄信，
-// 完成/失敗時回丟 "photo_email_sent" / "photo_email_failed"）。
+// 寄信這件事沒辦法在 HoloLens/Unity 端直接做，所以送去使用者後端（MRmuseum-backend，
+// 跟 UserInteractionRecorder/SubmitScores 等腳本共用同一台伺服器）的 POST /photo/email，
+// 由後端在伺服器端寄信。email 邏輯原本掛在 aibackend（story-mode 用的 Socket.IO 後端）
+// 那邊，架構上不屬於那裡，已經搬到使用者後端。
 public class GroupPhotoEmailPrompt : MonoBehaviour
 {
+    private const string EmailApiUrl = "http://140.119.19.195:3000/photo/email";
+
     [Header("依賴")]
     public GroupPhotoCapture photoCapture;
 
@@ -25,22 +27,7 @@ public class GroupPhotoEmailPrompt : MonoBehaviour
     public Button skipButton;
     public TMP_Text statusText;
 
-    private SocketIOUnity socket;
     private string pendingPhotoPath;
-
-    private void Awake()
-    {
-        var uri = new Uri(BackendConfig.Url);
-        socket = new SocketIOUnity(uri, new SocketIOOptions
-        {
-            Transport = SocketIOClient.Transport.TransportProtocol.WebSocket
-        });
-
-        socket.On("error", response => Debug.LogError($"[GroupPhotoEmailPrompt] Server error: {response}"));
-        socket.OnUnityThread("photo_email_sent", _ => ShowStatus("已寄出，請至信箱查收！"));
-        socket.OnUnityThread("photo_email_failed", response => ShowStatus("寄送失敗，請確認網路後再試一次"));
-        socket.ConnectAsync();
-    }
 
     private void Start()
     {
@@ -93,19 +80,45 @@ public class GroupPhotoEmailPrompt : MonoBehaviour
 
         byte[] photoBytes = File.ReadAllBytes(pendingPhotoPath);
         string photoBase64 = Convert.ToBase64String(photoBytes);
+        string fileName = Path.GetFileName(pendingPhotoPath);
 
         ShowStatus("寄送中...");
-        socket.EmitAsync("send_group_photo", new
+
+        // 照片內容已經整包讀進記憶體、待會交給 coroutine 送出了，本機這份留著也沒用，
+        // 馬上清掉；面板先收起來避免玩家在等後端回覆的空檔重複按送出。
+        if (emailPanel != null) emailPanel.SetActive(false);
+        StartCoroutine(PostGroupPhoto(email, photoBase64, fileName));
+        CleanupLocalFile();
+    }
+
+    private IEnumerator PostGroupPhoto(string email, string photoBase64, string fileName)
+    {
+        string jsonData = JsonUtility.ToJson(new GroupPhotoEmailRequest
         {
-            email,
+            email = email,
             photo_base64 = photoBase64,
-            file_name = Path.GetFileName(pendingPhotoPath)
+            file_name = fileName
         });
 
-        // 照片內容已經整包送進 EmitAsync 了，本機這份留著也沒用，馬上清掉；
-        // 面板先收起來避免玩家在等後端回覆的空檔重複按送出。
-        if (emailPanel != null) emailPanel.SetActive(false);
-        CleanupLocalFile();
+        using (UnityWebRequest www = UnityWebRequest.PostWwwForm(EmailApiUrl, "POST"))
+        {
+            byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonData);
+            www.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            www.downloadHandler = new DownloadHandlerBuffer();
+            www.SetRequestHeader("Content-Type", "application/json");
+
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.ConnectionError || www.result == UnityWebRequest.Result.ProtocolError)
+            {
+                Debug.LogError($"[GroupPhotoEmailPrompt] 寄送失敗：{www.error} / {www.downloadHandler.text}");
+                ShowStatus("寄送失敗，請確認網路後再試一次");
+            }
+            else
+            {
+                ShowStatus("已寄出，請至信箱查收！");
+            }
+        }
     }
 
     private void DiscardAndClose()
@@ -129,9 +142,11 @@ public class GroupPhotoEmailPrompt : MonoBehaviour
         if (statusText != null) statusText.text = message;
     }
 
-    private void OnDestroy()
+    [System.Serializable]
+    private class GroupPhotoEmailRequest
     {
-        socket?.DisconnectAsync();
-        socket?.Dispose();
+        public string email;
+        public string photo_base64;
+        public string file_name;
     }
 }

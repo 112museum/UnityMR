@@ -25,5 +25,5 @@ MonoBehaviour:
     taskTextPlayer1: 
     taskTextPlayer2: 
     objectsToShow:
-    - ColorBlindFilterOn
+    - GroupPhotoTrigger
     objectsToHide: []

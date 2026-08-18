@@ -1,9 +1,11 @@
+using System;
 using UnityEngine;
-using TMPro;
+using UnityEngine.UI;
 
 // 掛在任意 GameObject 上皆可（不再需要 Camera 元件——不是全螢幕後製，是改指定物件的材質）。
-// 只會改變 targetRenderers 裡指定的物件（例如展品、調色盤）的材質，不影響畫面其他部分，
-// 因為 HoloLens 是光學透視、看得到真實世界，全螢幕後製也碰不到真實物件，不如直接限定範圍。
+// 只會改變 targetRenderers（3D 物件的材質）跟 targetImages（2D UI 的 Image.color）裡
+// 指定的物件，不影響畫面其他部分，因為 HoloLens 是光學透視、看得到真實世界，全螢幕後製
+// 也碰不到真實物件，不如直接限定範圍。
 //
 // 類型不再讓玩家自己選——大部分色弱者其實不知道自己是哪個亞型。改成跟著學姊的流程走：
 // 玩家事先在外部評估網站做色覺測驗（Cambridge Color Vision Test 架構），測驗結果連同 QR code
@@ -25,20 +27,22 @@ public class ColorBlindFilterToggle : MonoBehaviour
     [Header("要套用色弱濾鏡的物件（例如展品、調色盤）")]
     public Renderer[] targetRenderers;
 
-    [Header("套用濾鏡用的 Shader（留空會自動用 Custom/NewSurfaceShader）")]
+    [Header("套用色弱濾鏡的 2D UI 物件")]
+    public Image[] targetImages;
+
+    [Header("套用濾鏡用的 Shader（留空會自動用 Custom/NewSurfaceShader，只用在 targetRenderers；targetImages 直接乘 Image.color，不需要 shader）")]
     public Shader colorBlindShader;
 
     [Range(1f, 2f)]
     public float intensity = 1.3f; // 對應學姊原本 factor: 1.15 輕度 / 1.3 中度 / 1.5 重度
-
-    [Header("按鈕文字（可選，用來顯示目前開/關狀態）")]
-    public TMP_Text buttonLabel;
 
     private bool isFilterOn = false;
     private bool hasDetectedType = false; // 玩家掃過 QR、確實拿到測驗結果了嗎
     private ColorBlindType detectedType = ColorBlindType.Normal;
     private Material[][] _originalMaterials;
     private Material[][] _tintedMaterials;
+    private Color[] _originalImageColors;
+    private Color[] _tintedImageColors;
 
     private void Awake()
     {
@@ -52,7 +56,16 @@ public class ColorBlindFilterToggle : MonoBehaviour
             colorBlindShader = Shader.Find("Custom/NewSurfaceShader");
         }
 
-        UpdateButtonLabel();
+        // 先把目前的顏色記成初始原色，這樣 SetTargetImageColor() 在濾鏡從沒開過的情況下
+        // 被呼叫也有陣列可以寫，不用等到第一次 CacheMaterials() 才有效。
+        int imgCount = targetImages != null ? targetImages.Length : 0;
+        _originalImageColors = new Color[imgCount];
+        _tintedImageColors = new Color[imgCount];
+        for (int i = 0; i < imgCount; i++)
+        {
+            if (targetImages[i] == null) continue;
+            _originalImageColors[i] = targetImages[i].color;
+        }
     }
 
     // 掛給 ColorVisionQRScanner：QR 解碼出玩家的色覺類型與程度後呼叫這個存起來。
@@ -111,6 +124,59 @@ public class ColorBlindFilterToggle : MonoBehaviour
         return true;
     }
 
+    // 給場景開始才動態生成的物件呼叫（例如碗，掛在該 prefab 上的腳本在 Start() 時呼叫），
+    // 把新生成的 Renderer 加進 targetRenderers 名單（原本場景裡固定的物件不受影響）。
+    // 如果濾鏡這時已經開著，會立刻重新套用一次，讓新加入的物件馬上吃到濾鏡，
+    // 不用等玩家下次手動開關才生效。
+    public void RegisterTargetRenderers(Renderer[] renderers)
+    {
+        if (renderers == null || renderers.Length == 0) return;
+
+        int oldLength = targetRenderers?.Length ?? 0;
+        var combined = new Renderer[oldLength + renderers.Length];
+        targetRenderers?.CopyTo(combined, 0);
+        renderers.CopyTo(combined, oldLength);
+        targetRenderers = combined;
+
+        if (isFilterOn)
+        {
+            CacheMaterials();
+            ApplyMultipliers();
+            ApplyToTargets(true);
+        }
+    }
+
+    // 給會動態改變 targetImages 內某個 Image 顏色的其他腳本呼叫（例如 GlazeColorPalette
+    // 選色時），取代直接寫 Image.color。選色永遠代表「這個物件現在真正該顯示的顏色」，
+    // 所以這裡固定會先更新濾鏡快取的原色（_originalImageColors），濾鏡開著才會再疊加
+    // 色弱調整；這樣選色不會被濾鏡的舊快取蓋掉，之後開關濾鏡也一定是用最新選的顏色去算，
+    // 不會打回選色之前的舊顏色。
+    public void SetTargetImageColor(Image img, Color baseColor)
+    {
+        if (img == null) return;
+
+        int index = targetImages != null ? Array.IndexOf(targetImages, img) : -1;
+        if (index < 0 || _originalImageColors == null || index >= _originalImageColors.Length)
+        {
+            // 不在濾鏡管理名單內（或還沒初始化），沒有快取可以同步，照原色顯示就好
+            img.color = baseColor;
+            return;
+        }
+
+        _originalImageColors[index] = baseColor;
+
+        if (!isFilterOn)
+        {
+            img.color = baseColor;
+            return;
+        }
+
+        var (r, g, b) = GetMultipliers();
+        Color tinted = new Color(baseColor.r * r, baseColor.g * g, baseColor.b * b, baseColor.a);
+        _tintedImageColors[index] = tinted;
+        img.color = tinted;
+    }
+
     // 掛給 ColorBlindChapterTrigger：第二幕開場的 tag 觸發時呼叫。
     // 玩家測出來是 Normal（QR 代碼 A）或根本沒掃過 QR 的話，不套濾鏡。
     public void ActivateFromChapter2()
@@ -131,7 +197,6 @@ public class ColorBlindFilterToggle : MonoBehaviour
         ApplyMultipliers();
         ApplyToTargets(true);
         isFilterOn = true;
-        UpdateButtonLabel();
         Debug.Log($"[ColorBlindFilterToggle] 濾鏡已套用：type={detectedType}, intensity={intensity}, targets={targetRenderers?.Length ?? 0}");
     }
 
@@ -147,7 +212,6 @@ public class ColorBlindFilterToggle : MonoBehaviour
         {
             isFilterOn = false;
             ApplyToTargets(false);
-            UpdateButtonLabel();
             return;
         }
 
@@ -161,7 +225,6 @@ public class ColorBlindFilterToggle : MonoBehaviour
         ApplyMultipliers();
         ApplyToTargets(true);
         isFilterOn = true;
-        UpdateButtonLabel();
     }
 
     // 幫每個目標物件各自準備一份「濾鏡材質」，保留該物件「目前」的貼圖/顏色(_MainTex)，
@@ -215,9 +278,20 @@ public class ColorBlindFilterToggle : MonoBehaviour
             }
             _tintedMaterials[i] = tinted;
         }
+
+        int imgCount = targetImages != null ? targetImages.Length : 0;
+        _originalImageColors = new Color[imgCount];
+        _tintedImageColors = new Color[imgCount];
+        for (int i = 0; i < imgCount; i++)
+        {
+            if (targetImages[i] == null) continue;
+            _originalImageColors[i] = targetImages[i].color;
+        }
     }
 
-    private void ApplyMultipliers()
+    // 依目前的色弱類型/intensity 算出 RGB 倍率，材質濾鏡（ApplyMultipliers）跟
+    // 2D 顏色濾鏡（SetTargetImageColor）共用同一份計算，兩邊的濾鏡強度才會一致。
+    private (float r, float g, float b) GetMultipliers()
     {
         float redMultiplier = 1f;
         float greenMultiplier = 1f;
@@ -238,6 +312,13 @@ public class ColorBlindFilterToggle : MonoBehaviour
                 greenMultiplier = intensity;
                 break;
         }
+
+        return (redMultiplier, greenMultiplier, blueMultiplier);
+    }
+
+    private void ApplyMultipliers()
+    {
+        var (redMultiplier, greenMultiplier, blueMultiplier) = GetMultipliers();
 
         for (int i = 0; i < _tintedMaterials.Length; i++)
         {
@@ -261,26 +342,41 @@ public class ColorBlindFilterToggle : MonoBehaviour
                 mat.SetVector("_Rect2", new Vector4(0, 0, 0, 0));
             }
         }
+
+        for (int i = 0; i < _tintedImageColors.Length; i++)
+        {
+            Color original = _originalImageColors[i];
+            _tintedImageColors[i] = new Color(
+                original.r * redMultiplier,
+                original.g * greenMultiplier,
+                original.b * blueMultiplier,
+                original.a);
+        }
     }
 
     private void ApplyToTargets(bool on)
     {
-        if (targetRenderers == null) return;
-
-        for (int i = 0; i < targetRenderers.Length; i++)
+        if (targetRenderers != null)
         {
-            Renderer rend = targetRenderers[i];
-            if (rend == null) continue;
+            for (int i = 0; i < targetRenderers.Length; i++)
+            {
+                Renderer rend = targetRenderers[i];
+                if (rend == null) continue;
 
-            rend.sharedMaterials = on ? _tintedMaterials[i] : _originalMaterials[i];
+                rend.sharedMaterials = on ? _tintedMaterials[i] : _originalMaterials[i];
+            }
+        }
+
+        if (targetImages != null)
+        {
+            for (int i = 0; i < targetImages.Length; i++)
+            {
+                Image img = targetImages[i];
+                if (img == null) continue;
+
+                img.color = on ? _tintedImageColors[i] : _originalImageColors[i];
+            }
         }
     }
 
-    private void UpdateButtonLabel()
-    {
-        if (buttonLabel != null)
-        {
-            buttonLabel.text = isFilterOn ? "關閉濾鏡" : "開啟濾鏡";
-        }
-    }
 }

@@ -4,5 +4,5 @@
 // 改成這裡統一管理，之後只要改這一行，全部一起生效，不用再挨個場景挨個元件找。
 public static class BackendConfig
 {
-    public static string Url = "http://172.20.10.8:5050";
+    public static string Url = "http://192.168.50.151:5050";
 }

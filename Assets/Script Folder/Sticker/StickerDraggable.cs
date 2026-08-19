@@ -42,6 +42,12 @@ public class StickerDraggable : MonoBehaviour
         }
     }
 
+    // 給 BowlSpawnedForStickers.Start() 呼叫，讓碗生成後能主動指派給場景裡每一顆貼紙。
+    public void SetBowlTarget(Transform target)
+    {
+        bowlTarget = target;
+    }
+
     private void OnDisable()
     {
         _manipulator.selectExited.RemoveListener(HandleReleased);

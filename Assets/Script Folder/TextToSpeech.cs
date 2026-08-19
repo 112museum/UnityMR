@@ -18,8 +18,7 @@ public class TextToSpeech : MonoBehaviour
     void Start()
     {
         // Initialize the Speech SDK
-        string envApiKey = EnvLoader.Get("AZURE_SPEECH_KEY");
-        if (!string.IsNullOrEmpty(envApiKey)) apiKey = envApiKey;
+        // apiKey = EnvLoader.Get("AZURE_SPEECH_KEY");
         speechConfig = SpeechConfig.FromSubscription(apiKey, region);
         speechConfig.SpeechSynthesisVoiceName = voiceName;
         synthesizer = new SpeechSynthesizer(speechConfig);

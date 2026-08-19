@@ -136,7 +136,6 @@ public class StoryModeManager : MonoBehaviour
             }
 
             RequestDialogueLine(line);
-            // animator.SetTrigger(line.npcAnimationTrigger);
         }
         else
         {
@@ -180,6 +179,11 @@ public class StoryModeManager : MonoBehaviour
 
         if (textManager != null) textManager.UpdateText(generatedText);
         if (talker != null) talker.Speak(generatedText);
+
+        if (animator != null && lineBeingSpoken.HasValue)
+        {
+            animator.SetTrigger(lineBeingSpoken.Value.npcAnimationTrigger);
+        }
 
         Debug.Log($"[StoryModeManager] {speaker}: {generatedText}");
     }

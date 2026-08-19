@@ -1,0 +1,244 @@
+*   [33maecc2b7[m WIP on sherry: 0d0e712 動畫
+[31m|[m[32m\[m  
+[31m|[m * [33m27f9ef4[m index on sherry: 0d0e712 動畫
+[31m|[m[31m/[m  
+* [33m0d0e712[m 動畫
+*   [33mab972a9[m Merge pull request #13 from 112museum/rose
+[33m|[m[34m\[m  
+[33m|[m *   [33ma33efb1[m Merge remote-tracking branch 'origin/main'
+[33m|[m [35m|[m[33m\[m  
+[33m|[m [35m|[m[33m/[m  
+[33m|[m[33m/[m[35m|[m   
+* [35m|[m   [33m6fd47fd[m Merge pull request #12 from 112museum/joy
+[1;31m|[m[1;32m\[m [35m\[m  
+[1;31m|[m [1;32m|[m [35m|[m * [33me645be7[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32msherry[m[33m, [m[1;35mrefs/stash[m[33m)[m 動畫
+[1;31m|[m [1;32m|[m [35m|[m *   [33m20c0cce[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge pull request #13 from 112museum/rose
+[1;31m|[m [1;32m|[m [35m|[m [1;34m|[m[1;35m\[m  
+[1;31m|[m [1;32m|[m [35m|[m [1;34m|[m * [33m26d6dad[m[33m ([m[1;31morigin/rose[m[33m)[m Merge remote-tracking branch 'origin/main'
+[1;31m|[m [1;32m|[m [35m|[m [1;34m|[m[35m/[m[1;34m|[m 
+[1;31m|[m [1;32m|[m [35m|[m[35m/[m[1;34m|[m[1;34m/[m  
+[1;31m|[m [1;32m|[m [35m|[m * [33mb0f960a[m Merge pull request #12 from 112museum/joy
+[1;31m|[m [1;32m|[m[1;31m_[m[35m|[m[1;31m/[m[1;32m|[m 
+[1;31m|[m[1;31m/[m[1;32m|[m [35m|[m[1;32m/[m  
+[1;31m|[m [1;32m|[m[1;32m/[m[35m|[m   
+[1;31m|[m [1;32m|[m * [33mc22feaa[m fix: TTS key handling, font fallback, backend connectivity fixes
+[1;31m|[m [1;32m|[m[1;31m/[m  
+[1;31m|[m[1;31m/[m[1;32m|[m   
+[1;31m|[m [1;32m|[m * [33m54a415a[m[33m ([m[1;31morigin/joy[m[33m)[m add more sticker, fix scroll handle bug
+[1;31m|[m [1;32m|[m[1;32m/[m  
+[1;31m|[m *   [33m915f8d8[m Merge branch 'main' into joy
+[1;31m|[m [35m|[m[1;31m\[m  
+[1;31m|[m [35m|[m[1;31m/[m  
+[1;31m|[m[1;31m/[m[35m|[m   
+* [35m|[m [33m7716ddb[m[33m ([m[1;31morigin/backup-zhang-0815[m[33m)[m fix: remove leftover backendUrl fields, update font ref and UI position in 張's scenes
+[36m|[m * [33m6ca4c25[m bowl change color
+[36m|[m[36m/[m  
+* [33m0114606[m sticker add switchColor add photo(haven't try yet)
+* [33mf3204f7[m take_photo_scene & change_color_scene & colorblind_scene, haven't merge
+*   [33maa233d3[m Merge branch 'joy' into main, resolving conflicts in favor of main
+[1;31m|[m[1;32m\[m  
+[1;31m|[m * [33m916ca38[m remove notosans
+[1;31m|[m * [33m26b2d50[m change color
+* [1;32m|[m [33m47b9e1e[m chore: add missing .meta file for BackendConfig.cs
+* [1;32m|[m [33mb7d7455[m fix: color-blind filter multiplier was being applied twice (squared intensity)
+* [1;32m|[m [33mf72188e[m refactor: centralize backend URL into BackendConfig
+* [1;32m|[m [33m4ee4fde[m fix: QR scanner reliability attempts + CJK font atlas overflow
+* [1;32m|[m [33m9100538[m feat: colorblind QR flow + group photo feature
+* [1;32m|[m [33m98bcfaf[m Merge pull request #11 from 112museum/joy
+[1;33m|[m[1;32m\[m[1;32m|[m 
+[1;33m|[m * [33mf755c9c[m story: fire scene game completed
+[1;33m|[m[1;33m/[m  
+*   [33m918cf4c[m Merge pull request #10 from 112museum/Llona
+[1;35m|[m[1;36m\[m  
+[1;35m|[m * [33m48a45ad[m 火種隨著進度條變大
+* [1;36m|[m [33mc0ca2d2[m Merge pull request #9 from 112museum/Llona
+[31m|[m[1;36m\[m[1;36m|[m 
+[31m|[m * [33m09b99b2[m 貼貼紙及火種更新
+[31m|[m[31m/[m  
+*   [33m7d4a5c0[m Merge pull request #8 from 112museum/joy
+[33m|[m[34m\[m  
+[33m|[m * [33md18c5ad[m put back SDF asset to scene
+[33m|[m *   [33m96f59d6[m Fix merge conflict: remove SDF asset as per updated gitignore
+[33m|[m [35m|[m[33m\[m  
+[33m|[m [35m|[m[33m/[m  
+[33m|[m[33m/[m[35m|[m   
+* [35m|[m   [33m098e4e1[m Merge pull request #7 from 112museum/Llona
+[1;31m|[m[1;32m\[m [35m\[m  
+[1;31m|[m * [35m|[m [33m654eb2b[m 貼紙更新
+* [1;32m|[m [35m|[m [33m0899946[m Merge pull request #6 from 112museum/Llona
+[1;33m|[m[1;32m\[m[1;32m|[m [35m|[m 
+[1;33m|[m * [35m|[m [33m749b082[m 火種更新
+[1;33m|[m * [35m|[m   [33m1c9488d[m Merge branch 'main' into Llona
+[1;33m|[m [1;35m|[m[1;33m\[m [35m\[m  
+[1;33m|[m [1;35m|[m[1;33m/[m [35m/[m  
+[1;33m|[m[1;33m/[m[1;35m|[m [35m|[m   
+* [1;35m|[m [35m|[m   [33ma89f917[m Merge branch 'main' of https://github.com/112museum/UnityMR
+[31m|[m[32m\[m [1;35m\[m [35m\[m  
+[31m|[m * [1;35m\[m [35m\[m   [33m8e9d06d[m Merge remote-tracking branch 'origin/main'
+[31m|[m [33m|[m[34m\[m [1;35m\[m [35m\[m  
+[31m|[m * [34m|[m [1;35m|[m [35m|[m [33m653b76e[m refactor: 廢掉QR掃描色盲類型，改成開啟濾鏡時跳出選單讓玩家自選
+* [34m|[m [34m|[m [1;35m|[m [35m|[m [33mb31158e[m chore: 停止追蹤過大的字型資產檔案
+[34m|[m [34m|[m[34m/[m [1;35m/[m [35m/[m  
+[34m|[m[34m/[m[34m|[m [1;35m|[m [35m|[m   
+* [34m|[m [1;35m|[m [35m|[m [33m4744604[m Merge branch 'main' of https://github.com/112museum/UnityMR
+[35m|[m[34m\[m[34m|[m [1;35m|[m [35m|[m 
+[35m|[m * [1;35m|[m [35m|[m [33m01f98cf[m add: Chapter4 story flow, colorblind QR type reader, glaze palette, group photo capture
+[35m|[m * [1;35m|[m [35m|[m   [33m8f850d9[m Merge pull request #5 from 112museum/joy
+[35m|[m [1;31m|[m[1;32m\[m [1;35m\[m [35m\[m  
+* [1;31m|[m [1;32m|[m [1;35m|[m [35m|[m [33ma09a9f8[m Merge branch 'main' of https://github.com/112museum/UnityMR
+[1;33m|[m[1;31m\[m[1;31m|[m [1;32m|[m [1;35m|[m [35m|[m 
+* [1;31m|[m [1;32m|[m [1;35m|[m [35m|[m [33mef1148a[m 火種測試更新
+[1;34m|[m [1;31m|[m [1;32m|[m * [35m|[m [33me7b3458[m 場景測試
+[1;34m|[m [1;31m|[m [1;32m|[m * [35m|[m [33m772a98d[m 忽略超過 100MB 的字型 SDF atlas 檔案，避免推送到 GitHub 被拒絕
+[1;34m|[m [1;31m|[m [1;32m|[m * [35m|[m   [33mcc1c305[m Merge branch 'main' of https://github.com/112museum/UnityMR
+[1;34m|[m [1;31m|[m [1;32m|[m [1;35m|[m[1;31m\[m [35m\[m  
+[1;34m|[m [1;31m|[m [1;32m|[m[1;31m_[m[1;35m|[m[1;31m/[m [35m/[m  
+[1;34m|[m [1;31m|[m[1;31m/[m[1;32m|[m [1;35m|[m [35m|[m   
+[1;34m|[m [1;31m|[m [1;32m|[m * [35m|[m [33mbf2e9ef[m 火種測試更新
+[1;34m|[m [1;31m|[m[1;34m_[m[1;32m|[m[1;34m/[m [35m/[m  
+[1;34m|[m[1;34m/[m[1;31m|[m [1;32m|[m [35m|[m   
+[1;34m|[m [1;31m|[m [1;32m|[m * [33m4484915[m update subtitle, faq
+[1;34m|[m [1;31m|[m [1;32m|[m[1;32m/[m  
+[1;34m|[m [1;31m|[m *   [33me2ef2a8[m fix: resolve merge conflict in font asset (keep ours)
+[1;34m|[m [1;31m|[m [31m|[m[1;31m\[m  
+[1;34m|[m [1;31m|[m [31m|[m[1;31m/[m  
+[1;34m|[m [1;31m|[m[1;31m/[m[31m|[m   
+[1;34m|[m * [31m|[m [33m3082af6[m 忽略並移除已追蹤的 .DS_Store 檔案
+[1;34m|[m * [31m|[m [33m2a727c7[m 色盲色弱測試按鈕
+[1;34m|[m[1;34m/[m [31m/[m  
+* [31m|[m   [33m0344843[m 火種更新
+[33m|[m[34m\[m [31m\[m  
+[33m|[m * [31m|[m [33m26f7790[m 火種更新
+* [34m|[m [31m|[m   [33m998d7b0[m Merge pull request #3 from 112museum/joy
+[35m|[m[36m\[m [34m\[m [31m\[m  
+[35m|[m [36m|[m [34m|[m * [33m5bc355d[m fixed: answer question(mission 1 & 2)
+[35m|[m [36m|[m [34m|[m[36m/[m  
+[35m|[m [36m|[m[36m/[m[34m|[m   
+[35m|[m * [34m|[m [33mc5f92c5[m story startscene speech & subtitle finished
+[35m|[m * [34m|[m [33me625200[m add subtitle, update story mode structure
+[35m|[m * [34m|[m [33md0292e2[m storyprompt, storychapter manager
+[35m|[m * [34m|[m   [33mc11ac08[m Merge branch 'main' into joy
+[35m|[m [1;31m|[m[35m\[m [34m\[m  
+[35m|[m [1;31m|[m[35m/[m [34m/[m  
+[35m|[m[35m/[m[1;31m|[m [34m|[m   
+* [1;31m|[m [34m|[m   [33me52c328[m 更新設定、解決錯誤
+[1;33m|[m[34m\[m [1;31m\[m [34m\[m  
+[1;33m|[m [34m|[m [1;31m|[m[34m/[m  
+[1;33m|[m [34m|[m[34m/[m[1;31m|[m   
+[1;33m|[m * [1;31m|[m [33medcd44e[m 更新設定、解決錯誤
+[1;33m|[m[1;33m/[m [1;31m/[m  
+* [1;31m|[m   [33mdc3e40d[m Merge branch 'main' of https://github.com/112museum/UnityMR
+[1;35m|[m[1;36m\[m [1;31m\[m  
+[1;35m|[m * [1;31m\[m   [33m1634330[m Merge pull request #1 from 112museum/joy
+[1;35m|[m [31m|[m[32m\[m [1;31m\[m  
+* [31m|[m [32m|[m [1;31m|[m [33m527c2b3[m 火種測試
+[31m|[m[31m/[m [32m/[m [1;31m/[m  
+[31m|[m [32m|[m * [33m46d9873[m project setting update
+[31m|[m [32m|[m * [33m2569d17[m fixed: anchor problem, add: story mode initial structure
+[31m|[m [32m|[m[32m/[m  
+[31m|[m * [33mdfea8ef[m add scene: multiuser test, multiuser func abled
+[31m|[m[31m/[m  
+* [33m3ed4029[m Initial commit without LFS
+* [33mc12cc2b[m bowl change color
+* [33m18abbd6[m 火種隨著進度條變大
+* [33mf1c3f5a[m 貼貼紙及火種更新
+*   [33m97d30e4[m Merge pull request #8 from 112museum/joy
+[34m|[m[35m\[m  
+[34m|[m * [33m305af85[m put back SDF asset to scene
+[34m|[m *   [33m6c0f1c7[m Fix merge conflict: remove SDF asset as per updated gitignore
+[34m|[m [36m|[m[34m\[m  
+[34m|[m [36m|[m[34m/[m  
+[34m|[m[34m/[m[36m|[m   
+* [36m|[m   [33mf0b9fd4[m Merge pull request #7 from 112museum/Llona
+[1;32m|[m[1;33m\[m [36m\[m  
+[1;32m|[m * [36m|[m [33m85a02a7[m 貼紙更新
+* [1;33m|[m [36m|[m [33m18d8cb1[m Merge pull request #6 from 112museum/Llona
+[1;34m|[m[1;33m\[m[1;33m|[m [36m|[m 
+[1;34m|[m * [36m|[m [33m417eb86[m 火種更新
+[1;34m|[m * [36m|[m   [33mab2eb78[m Merge branch 'main' into Llona
+[1;34m|[m [1;36m|[m[1;34m\[m [36m\[m  
+[1;34m|[m [1;36m|[m[1;34m/[m [36m/[m  
+[1;34m|[m[1;34m/[m[1;36m|[m [36m|[m   
+* [1;36m|[m [36m|[m   [33mf3cc4c0[m Merge branch 'main' of https://github.com/112museum/UnityMR
+[32m|[m[33m\[m [1;36m\[m [36m\[m  
+[32m|[m * [1;36m\[m [36m\[m   [33m6c4dbd4[m Merge remote-tracking branch 'origin/main'
+[32m|[m [34m|[m[35m\[m [1;36m\[m [36m\[m  
+[32m|[m * [35m|[m [1;36m|[m [36m|[m [33me382b17[m refactor: 廢掉QR掃描色盲類型，改成開啟濾鏡時跳出選單讓玩家自選
+* [35m|[m [35m|[m [1;36m|[m [36m|[m [33m1da0f20[m chore: 停止追蹤過大的字型資產檔案
+[35m|[m [35m|[m[35m/[m [1;36m/[m [36m/[m  
+[35m|[m[35m/[m[35m|[m [1;36m|[m [36m|[m   
+* [35m|[m [1;36m|[m [36m|[m [33m4741a77[m Merge branch 'main' of https://github.com/112museum/UnityMR
+[36m|[m[35m\[m[35m|[m [1;36m|[m [36m|[m 
+[36m|[m * [1;36m|[m [36m|[m [33maa178b8[m add: Chapter4 story flow, colorblind QR type reader, glaze palette, group photo capture
+[36m|[m * [1;36m|[m [36m|[m   [33mc7d31d0[m Merge pull request #5 from 112museum/joy
+[36m|[m [1;32m|[m[1;33m\[m [1;36m\[m [36m\[m  
+* [1;32m|[m [1;33m|[m [1;36m|[m [36m|[m [33m3f11858[m Merge branch 'main' of https://github.com/112museum/UnityMR
+[1;34m|[m[1;32m\[m[1;32m|[m [1;33m|[m [1;36m|[m [36m|[m 
+* [1;32m|[m [1;33m|[m [1;36m|[m [36m|[m [33m379a224[m 火種測試更新
+[1;35m|[m [1;32m|[m [1;33m|[m * [36m|[m [33m2522200[m 場景測試
+[1;35m|[m [1;32m|[m [1;33m|[m * [36m|[m [33m3290dff[m 忽略超過 100MB 的字型 SDF atlas 檔案，避免推送到 GitHub 被拒絕
+[1;35m|[m [1;32m|[m [1;33m|[m * [36m|[m   [33m93f1daf[m Merge branch 'main' of https://github.com/112museum/UnityMR
+[1;35m|[m [1;32m|[m [1;33m|[m [1;36m|[m[31m\[m [36m\[m  
+[1;35m|[m [1;32m|[m [1;33m|[m [1;36m|[m * [36m|[m [33m628f967[m 忽略並移除已追蹤的 .DS_Store 檔案
+[1;35m|[m [1;32m|[m [1;33m|[m [1;36m|[m * [36m|[m [33m9f42a0f[m 色盲色弱測試按鈕
+[1;35m|[m [1;32m|[m[1;35m_[m[1;33m|[m[1;35m_[m[1;36m|[m[1;35m/[m [36m/[m  
+[1;35m|[m[1;35m/[m[1;32m|[m [1;33m|[m [1;36m|[m [36m|[m   
+[1;35m|[m [1;32m|[m [1;33m|[m * [36m|[m [33m76e95a1[m 火種測試更新
+[1;35m|[m [1;32m|[m[1;35m_[m[1;33m|[m[1;35m/[m [36m/[m  
+[1;35m|[m[1;35m/[m[1;32m|[m [1;33m|[m [36m|[m   
+[1;35m|[m [1;32m|[m [1;33m|[m * [33mdf03522[m update subtitle, faq
+[1;35m|[m [1;32m|[m [1;33m|[m[1;33m/[m  
+[1;35m|[m [1;32m|[m *   [33m898e3fa[m fix: resolve merge conflict in font asset (keep ours)
+[1;35m|[m [1;32m|[m [32m|[m[1;32m\[m  
+[1;35m|[m [1;32m|[m [32m|[m[1;32m/[m  
+[1;35m|[m [1;32m|[m[1;32m/[m[32m|[m   
+[1;35m|[m * [32m|[m [33me24c71f[m 忽略並移除已追蹤的 .DS_Store 檔案
+[1;35m|[m * [32m|[m [33m576b4b7[m 色盲色弱測試按鈕
+[1;35m|[m[1;35m/[m [32m/[m  
+* [32m|[m   [33mdbed7ca[m 火種更新
+[34m|[m[35m\[m [32m\[m  
+[34m|[m * [32m|[m [33m2f0c021[m 火種更新
+* [35m|[m [32m|[m   [33m0496313[m Merge pull request #3 from 112museum/joy
+[36m|[m[1;31m\[m [35m\[m [32m\[m  
+[36m|[m [1;31m|[m [35m|[m * [33mc671657[m fixed: answer question(mission 1 & 2)
+[36m|[m [1;31m|[m [35m|[m[1;31m/[m  
+[36m|[m [1;31m|[m[1;31m/[m[35m|[m   
+[36m|[m * [35m|[m [33m9f28142[m story startscene speech & subtitle finished
+[36m|[m * [35m|[m [33mb17edc5[m add subtitle, update story mode structure
+[36m|[m * [35m|[m [33mf4d7b54[m storyprompt, storychapter manager
+[36m|[m * [35m|[m   [33m0d0c1ec[m Merge branch 'main' into joy
+[36m|[m [1;32m|[m[36m\[m [35m\[m  
+[36m|[m [1;32m|[m[36m/[m [35m/[m  
+[36m|[m[36m/[m[1;32m|[m [35m|[m   
+* [1;32m|[m [35m|[m   [33m8675798[m 更新設定、解決錯誤
+[1;34m|[m[35m\[m [1;32m\[m [35m\[m  
+[1;34m|[m [35m|[m [1;32m|[m[35m/[m  
+[1;34m|[m [35m|[m[35m/[m[1;32m|[m   
+[1;34m|[m * [1;32m|[m [33m626fce0[m 更新設定、解決錯誤
+[1;34m|[m[1;34m/[m [1;32m/[m  
+* [1;32m|[m   [33mff0bad6[m Merge branch 'main' of https://github.com/112museum/UnityMR
+[1;36m|[m[31m\[m [1;32m\[m  
+[1;36m|[m * [1;32m\[m   [33m49904ff[m Merge pull request #1 from 112museum/joy
+[1;36m|[m [32m|[m[33m\[m [1;32m\[m  
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m * [33m363a11d[m[33m ([m[1;31morigin/Llona[m[33m)[m bowl change color
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m * [33m8e18f72[m 火種隨著進度條變大
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m * [33m035cf3a[m 貼貼紙及火種更新
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m *   [33mc9df23f[m Merge pull request #8 from 112museum/joy
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m [35m|[m[36m\[m  
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m [35m|[m * [33m237146d[m put back SDF asset to scene
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m [35m|[m *   [33m768a688[m Fix merge conflict: remove SDF asset as per updated gitignore
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m [35m|[m [1;31m|[m[35m\[m  
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m [35m|[m [1;31m|[m[35m/[m  
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m [35m|[m[35m/[m[1;31m|[m   
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m * [1;31m|[m   [33m118b99b[m Merge pull request #7 from 112museum/Llona
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m [1;33m|[m[1;34m\[m [1;31m\[m  
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m [1;33m|[m * [1;31m|[m [33m5692ff3[m 貼紙更新
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m * [1;34m|[m [1;31m|[m [33me28b0d8[m Merge pull request #6 from 112museum/Llona
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m [1;35m|[m[1;34m\[m[1;34m|[m [1;31m|[m 
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m [1;35m|[m * [1;31m|[m [33mfa18810[m 火種更新
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m [1;35m|[m * [1;31m|[m   [33m610a4ad[m Merge branch 'main' into Llona
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m [1;35m|[m [31m|[m[1;35m\[m [1;31m\[m  
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m [1;35m|[m [31m|[m[1;35m/[m [1;31m/[m  
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m [1;35m|[m[1;35m/[m[31m|[m [1;31m|[m   
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m * [31m|[m [1;31m|[m   [33m1246666[m[33m ([m[1;31morigin/sherry[m[33m)[m Merge branch 'main' of https://github.com/112museum/UnityMR
+[1;36m|[m [32m|[m [33m|[m [1;32m|[m [33m|[m[34m\[m [31m\[m [1;31m\[m  

@@ -5876,9 +5876,9 @@ MonoBehaviour:
   currentStatus: 0
   currentLineIndex: 0
   allChapters:
+  - {fileID: 11400000, guid: c5e641686d7e0dc4282e3db1ce966ca5, type: 2}
   - {fileID: 11400000, guid: f0c911ffa49e52342ac652f06ed8b71b, type: 2}
   - {fileID: 11400000, guid: 9967236f937e0004591776db30816ca6, type: 2}
-  - {fileID: 11400000, guid: c5e641686d7e0dc4282e3db1ce966ca5, type: 2}
   - {fileID: 11400000, guid: 47c01137f39282547b9feeef520eb7ea, type: 2}
   - {fileID: 11400000, guid: b551a668c8cd61448aba70150fca4b9c, type: 2}
   textManager: {fileID: 1117908186}
@@ -9934,7 +9934,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2a6db1d6f97d00746a937edd070cde79, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.21
+      value: 0.14
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2a6db1d6f97d00746a937edd070cde79, type: 3}
       propertyPath: m_LocalPosition.y
@@ -9946,7 +9946,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2a6db1d6f97d00746a937edd070cde79, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.0018179917
+      value: 0.076022126
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2a6db1d6f97d00746a937edd070cde79, type: 3}
       propertyPath: m_LocalRotation.x
@@ -9954,7 +9954,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2a6db1d6f97d00746a937edd070cde79, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0.99999833
+      value: -0.99710613
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2a6db1d6f97d00746a937edd070cde79, type: 3}
       propertyPath: m_LocalRotation.z
@@ -9966,7 +9966,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2a6db1d6f97d00746a937edd070cde79, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -179.792
+      value: -171.28
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2a6db1d6f97d00746a937edd070cde79, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -13403,7 +13403,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7256543901087109448, guid: dc7ef7d5625c3454ab5097673a207485, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7256543901087109448, guid: dc7ef7d5625c3454ab5097673a207485, type: 3}
       propertyPath: m_TagString
@@ -13472,14 +13472,14 @@ PrefabInstance:
     - target: {fileID: 8020123736222291503, guid: dc7ef7d5625c3454ab5097673a207485, type: 3}
       propertyPath: <OnClicked>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 1886907307}
+      objectReference: {fileID: 1117908184}
     - target: {fileID: 8020123736222291503, guid: dc7ef7d5625c3454ab5097673a207485, type: 3}
       propertyPath: <OnClicked>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8020123736222291503, guid: dc7ef7d5625c3454ab5097673a207485, type: 3}
       propertyPath: <OnClicked>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: ToggleRecognition
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 8020123736222291503, guid: dc7ef7d5625c3454ab5097673a207485, type: 3}
       propertyPath: <OnClicked>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
@@ -13492,10 +13492,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 7256543900600860858, guid: dc7ef7d5625c3454ab5097673a207485, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: dc7ef7d5625c3454ab5097673a207485, type: 3}
 --- !u!4 &1358916360 stripped
 Transform:

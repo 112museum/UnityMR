@@ -8,6 +8,8 @@
 // per playthrough (see StoryModeManager.StartStoryMode) so a new group of players never
 // inherits an earlier group's conversation history.
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Serialization;
 using UnityEngine;
 using SocketIOClient;
@@ -32,7 +34,7 @@ public class StoryPromptManager : MonoBehaviour, IOnEventCallback
 
     private const byte STORY_RESPONSE_EVENT = 44;
 
-    public event Action<string, string> OnStoryLine; // (npcRole, generatedText)
+    public event Action<string, string, List<string>> OnStoryLine; // (npcRole, generatedText, segments)
 
     private void Awake()
     {
@@ -74,13 +76,13 @@ public class StoryPromptManager : MonoBehaviour, IOnEventCallback
         {
             var data = response.GetValue<StoryResponseData>();
             Debug.Log($"[StoryPromptManager] story_response received: npc={data.NpcRole}, isLastSender={isLastSender}, inRoom={PhotonNetwork.InRoom}");
-            RaiseOrApply(data.NpcRole, data.Response);
+            RaiseOrApply(data.NpcRole, data.Response, data.Segments ?? new List<string> { data.Response });
         });
 
         socket.ConnectAsync();
     }
 
-    public void RequestLine(string chapterId, int lineIndex, string npcRole, string prompt, string playthroughId)
+    public void RequestLine(string chapterId, int lineIndex, string npcRole, List<string> prompts, string playthroughId)
     {
         if (!isConnected)
         {
@@ -93,18 +95,18 @@ public class StoryPromptManager : MonoBehaviour, IOnEventCallback
         // alone is a fixed name nobody ever "leaves", so without it a new group of players
         // would inherit whatever conversation history the previous group left behind.
         string roomId = $"story-{playthroughId}-{chapterId}-{npcRole}";
-        Debug.Log($"[StoryPromptManager] Sending story_prompt: room={roomId}, npc={npcRole}, prompt={prompt}");
+        Debug.Log($"[StoryPromptManager] Sending story_prompt: room={roomId}, npc={npcRole}, prompts=[{string.Join(" | ", prompts)}]");
         socket.EmitAsync("story_prompt", new
         {
             room_id = roomId,
             npc_role = npcRole,
             chapter_id = chapterId,
             line_index = lineIndex,
-            prompt
+            prompts
         });
     }
 
-    private void RaiseOrApply(string npcRole, string responseText)
+    private void RaiseOrApply(string npcRole, string responseText, List<string> segments)
     {
         if (PhotonNetwork.InRoom)
         {
@@ -112,7 +114,7 @@ public class StoryPromptManager : MonoBehaviour, IOnEventCallback
             {
                 isLastSender = false;
                 Debug.Log($"[StoryPromptManager] Relaying via PhotonNetwork.RaiseEvent: npc={npcRole}");
-                object[] content = { npcRole, responseText };
+                object[] content = { npcRole, responseText, segments.ToArray() };
                 PhotonNetwork.RaiseEvent(STORY_RESPONSE_EVENT, content,
                     new RaiseEventOptions { Receivers = ReceiverGroup.All },
                     SendOptions.SendReliable);
@@ -125,7 +127,7 @@ public class StoryPromptManager : MonoBehaviour, IOnEventCallback
         }
 
         Debug.Log($"[StoryPromptManager] Not in a Photon room — invoking OnStoryLine directly.");
-        OnStoryLine?.Invoke(npcRole, responseText);
+        OnStoryLine?.Invoke(npcRole, responseText, segments);
     }
 
     public void OnEvent(EventData photonEvent)
@@ -134,7 +136,8 @@ public class StoryPromptManager : MonoBehaviour, IOnEventCallback
 
         object[] data = (object[])photonEvent.CustomData;
         Debug.Log($"[StoryPromptManager] OnEvent received relayed story line: npc={data[0]}");
-        OnStoryLine?.Invoke((string)data[0], (string)data[1]);
+        List<string> segments = ((string[])data[2]).ToList();
+        OnStoryLine?.Invoke((string)data[0], (string)data[1], segments);
     }
 
     private void OnDestroy()
@@ -153,5 +156,6 @@ public class StoryPromptManager : MonoBehaviour, IOnEventCallback
     {
         [JsonPropertyName("npc_role")] public string NpcRole { get; set; }
         [JsonPropertyName("response")] public string Response { get; set; }
+        [JsonPropertyName("segments")] public List<string> Segments { get; set; }
     }
 }

@@ -1,13 +1,23 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+// 一個動作各自的 prompt + 對應的 Animator trigger。DialogueLine.beats 是這個的清單——
+// 設計者自己決定每個動作要講什麼、順序為何，後端會在同一次呼叫裡針對每個 beat 的
+// dialogueText 各自生成一段回覆，依序播放並各自觸發自己的 npcAnimationTrigger
+// (StoryModeManager.RequestDialogueLine / HandleDialogueResponse)。
+[System.Serializable]
+public struct DialogueBeat
+{
+    public string dialogueText;        // 這個動作專屬的 prompt，送給後端 LLM
+    public string npcAnimationTrigger; // 這個動作的 Animator trigger
+}
+
 [System.Serializable]
 public struct DialogueLine
 {
     public string speakerName;     // 誰說話 (NPC, 角色A, 角色B)
-    public string dialogueText;    // 送給後端 LLM 的 prompt/劇情稿（StoryModeManager.RequestDialogueLine）
     // public AudioClip voiceOver;    // 語音檔 (如果有)
-    public string npcAnimationTrigger; // NPC 說這句話時要做的動作
+    public List<DialogueBeat> beats; // 空清單＝這行不呼叫後端，只套用下面的顯示/隱藏物件等效果
 
     [Header("Free Chat")]
     public bool startsFreeChat; // 這句台詞講完後，開放玩家自由問答 speakerName 對應的 NPC

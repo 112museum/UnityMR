@@ -27,8 +27,7 @@ public class DialogueLineDrawer : PropertyDrawer
     IEnumerable<Row> BuildRows(SerializedProperty property)
     {
         yield return new Row("speakerName", 0f);
-        yield return new Row("dialogueText", Gap);
-        yield return new Row("npcAnimationTrigger", Gap);
+        yield return new Row("beats", Gap);
 
         yield return new Row("startsFreeChat", SectionGap);
         if (property.FindPropertyRelative("startsFreeChat").boolValue)

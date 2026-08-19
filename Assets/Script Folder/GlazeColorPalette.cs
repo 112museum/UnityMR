@@ -18,14 +18,17 @@ public class GlazeColorPalette : MonoBehaviourPun
     [Header("調色盤色票（依序對應面板上的色票按鈕，SelectColor 用索引指定）")]
     public Color[] paletteColors;
 
-    [Header("面板預覽模型（3D，選色時即時換色，尚未確認）")]
-    public Renderer[] previewRenderers;
-
-    [Header("面板預覽圖示（2D UI Image，選色時即時換色，尚未確認）")]
+    [Header("面板預覽圖示")]
     public Image[] previewImages;
 
     [Header("真正的碗本體（按下確認後才套色；若碗是場景中動態生成的，改用 RegisterActualBowl() 註冊，這裡留空即可）")]
     public Renderer[] actualRenderers;
+
+    [Header("套色時換上的黑白釉料材質")]
+    public Material glazeGrayscaleMaterial;
+
+    [Header("玩家沒選色的預設材質")]
+    public Material defaultMaterial;
 
     [Header("確認選色後觸發（推進劇情用，這時碗本體還沒變色）")]
     public UnityEvent onColorConfirmed;
@@ -39,33 +42,6 @@ public class GlazeColorPalette : MonoBehaviourPun
     public int SelectedIndex { get; private set; } = -1;
     public bool IsConfirmed { get; private set; }
     public bool IsAppliedToBowl { get; private set; }
-
-    private Material[][] _previewMaterialInstances;
-    private Material[][] _actualMaterialInstances;
-
-    private void Start()
-    {
-        _previewMaterialInstances = CacheMaterials(previewRenderers);
-        _actualMaterialInstances = CacheMaterials(actualRenderers);
-    }
-
-    // Renderer.materials 存取時會自動幫每個 Renderer 建立獨立的材質實例，
-    // 改色才不會牽動到其他共用同一份 sharedMaterial 的物件
-    private static Material[][] CacheMaterials(Renderer[] renderers)
-    {
-        int count = renderers != null ? renderers.Length : 0;
-        var result = new Material[count][];
-
-        for (int i = 0; i < count; i++)
-        {
-            var rend = renderers[i];
-            if (rend == null) continue;
-
-            result[i] = rend.materials;
-        }
-
-        return result;
-    }
 
     // 把這個方法掛到每個色票按鈕的 On Click()，colorIndex 對應 paletteColors 的索引
     public void SelectColor(int colorIndex)
@@ -82,11 +58,16 @@ public class GlazeColorPalette : MonoBehaviourPun
     public void RegisterActualBowl(Renderer[] renderers)
     {
         actualRenderers = renderers;
-        _actualMaterialInstances = CacheMaterials(actualRenderers);
 
-        if (IsAppliedToBowl && SelectedIndex >= 0)
+        if (!IsAppliedToBowl) return;
+
+        if (SelectedIndex >= 0)
         {
-            ApplyColorToTargets(_actualMaterialInstances, paletteColors[SelectedIndex]);
+            ApplyGlazeToRenderers(actualRenderers, paletteColors[SelectedIndex]);
+        }
+        else
+        {
+            ApplyDefaultMaterialToRenderers(actualRenderers);
         }
     }
 
@@ -99,15 +80,21 @@ public class GlazeColorPalette : MonoBehaviourPun
         photonView.RPC(nameof(RpcConfirm), RpcTarget.All);
     }
 
-    // 真正把已鎖定的顏色套到碗本體，在你需要的時機（例如碗被放進窯爐、或劇情推進到某個
-    // 特定步驟）從別的地方呼叫這個。一定要先 ConfirmSelection() 過才有效。
+    // 真正把碗本體套上材質，在你需要的時機（例如碗被放進窯爐、或劇情推進到某個特定步驟）
+    // 從別的地方呼叫這個。如果玩家已經選色並確認過，套的是上色後的 glazeGrayscaleMaterial；
+    // 如果玩家沒選色（沒呼叫過 ConfirmSelection() 或根本沒選），就直接套上 defaultMaterial。
     public void ApplyColorToBowl()
     {
-        if (!IsConfirmed) return; // 還沒確認顏色，不能套用
         if (IsAppliedToBowl) return; // 已經套過了
-        if (SelectedIndex < 0) return;
 
-        photonView.RPC(nameof(RpcApplyToBowl), RpcTarget.All);
+        if (IsConfirmed && SelectedIndex >= 0)
+        {
+            photonView.RPC(nameof(RpcApplyToBowl), RpcTarget.All);
+        }
+        else
+        {
+            photonView.RPC(nameof(RpcApplyDefaultToBowl), RpcTarget.All);
+        }
     }
 
     [PunRPC]
@@ -115,7 +102,6 @@ public class GlazeColorPalette : MonoBehaviourPun
     {
         SelectedIndex = colorIndex;
         Color color = paletteColors[colorIndex];
-        ApplyColorToTargets(_previewMaterialInstances, color);
         ApplyColorToImages(color);
     }
 
@@ -131,32 +117,57 @@ public class GlazeColorPalette : MonoBehaviourPun
     private void RpcApplyToBowl()
     {
         IsAppliedToBowl = true;
-        ApplyColorToTargets(_actualMaterialInstances, paletteColors[SelectedIndex]);
+        ApplyGlazeToRenderers(actualRenderers, paletteColors[SelectedIndex]);
         onColorAppliedToBowl?.Invoke();
     }
 
-    private static void ApplyColorToTargets(Material[][] materialInstances, Color color)
+    [PunRPC]
+    private void RpcApplyDefaultToBowl()
     {
-        if (materialInstances == null) return;
+        IsAppliedToBowl = true;
+        ApplyDefaultMaterialToRenderers(actualRenderers);
+        onColorAppliedToBowl?.Invoke();
+    }
 
-        for (int i = 0; i < materialInstances.Length; i++)
+    // 把碗本體的 material 整個換成黑白釉料材質的獨立實例，再上色（而不是像預覽那樣直接改
+    // 原本 default material 的 _Color），這樣碗身才會真的套上另一份材質的紋理/質感，不只是變色。
+    private void ApplyGlazeToRenderers(Renderer[] renderers, Color color)
+    {
+        if (renderers == null || glazeGrayscaleMaterial == null) return;
+
+        foreach (Renderer rend in renderers)
         {
-            if (materialInstances[i] == null) continue;
+            if (rend == null) continue;
 
-            foreach (Material mat in materialInstances[i])
+            Material instance = new Material(glazeGrayscaleMaterial);
+            if (instance.HasProperty("_Color"))
             {
-                if (mat.HasProperty("_Color"))
-                {
-                    mat.SetColor("_Color", color);
-                }
-                else if (mat.HasProperty("_BaseColor"))
-                {
-                    mat.SetColor("_BaseColor", color);
-                }
+                instance.SetColor("_Color", color);
             }
+            else if (instance.HasProperty("_BaseColor"))
+            {
+                instance.SetColor("_BaseColor", color);
+            }
+
+            rend.material = instance;
         }
     }
 
+    // 沒選色時套用的預設材質，不需要上色也不需要各自獨立實例，直接共用同一份 sharedMaterial 即可。
+    private void ApplyDefaultMaterialToRenderers(Renderer[] renderers)
+    {
+        if (renderers == null || defaultMaterial == null) return;
+
+        foreach (Renderer rend in renderers)
+        {
+            if (rend == null) continue;
+            rend.sharedMaterial = defaultMaterial;
+        }
+    }
+
+    // 不直接寫 img.color，而是透過 ColorBlindFilterToggle 登記「真正選的顏色」——
+    // 如果濾鏡當下是開著的，濾鏡會在這個顏色上疊加色弱調整；沒有濾鏡（或場景裡沒放這個
+    // 元件）就照原色顯示。這樣選色永遠有優先權，不會被濾鏡自己開關時的舊快取蓋掉。
     private void ApplyColorToImages(Color color)
     {
         if (previewImages == null) return;
@@ -164,7 +175,15 @@ public class GlazeColorPalette : MonoBehaviourPun
         foreach (Image img in previewImages)
         {
             if (img == null) continue;
-            img.color = color;
+
+            if (ColorBlindFilterToggle.Instance != null)
+            {
+                ColorBlindFilterToggle.Instance.SetTargetImageColor(img, color);
+            }
+            else
+            {
+                img.color = color;
+            }
         }
     }
 }

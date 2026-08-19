@@ -23,16 +23,28 @@ public class RoomLinker : MonoBehaviourPunCallbacks
     // connect and OnConnectedToMaster() joins the room once that completes.
     public void JoinRoom()
     {
-        if (PhotonNetwork.IsConnected)
+        if (PhotonNetwork.InRoom) return;
+
+        // Client is already fully connected to the master server and ready for matchmaking
+        // (as opposed to just PhotonNetwork.IsConnected, which is also true mid-handshake,
+        // e.g. ConnectingToMasterServer/Authenticating — calling JoinOrCreateRoom then fails
+        // with "not ready for operations").
+        if (PhotonNetwork.NetworkClientState == ClientState.ConnectedToMasterServer)
         {
-            if (!PhotonNetwork.InRoom) OnConnectedToMaster();
+            JoinOrCreateFixedRoom();
             return;
         }
 
-        PhotonNetwork.ConnectUsingSettings();
+        if (!PhotonNetwork.IsConnected)
+        {
+            PhotonNetwork.ConnectUsingSettings();
+        }
+        // else: already connecting/authenticating — OnConnectedToMaster() below will fire once ready.
     }
 
-    public override void OnConnectedToMaster()
+    public override void OnConnectedToMaster() => JoinOrCreateFixedRoom();
+
+    private void JoinOrCreateFixedRoom()
     {
         // CleanupCacheOnLeave = false so a player's PhotonNetwork.Instantiate()'d objects
         // (e.g. the interactable exhibits) survive after that player leaves the room.

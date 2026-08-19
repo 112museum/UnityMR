@@ -15,8 +15,7 @@ MonoBehaviour:
   chapterNumber: 0
   dialogueLines:
   - speakerName: "\u4E7E\u9686\u5E1D(\u611B\u65B0\u89BA\u7F85\xB7\u5F18\u66C6)"
-    dialogueText: 
-    npcAnimationTrigger: 
+    beats: []
     startsFreeChat: 0
     freeChatSuccessKeyword: 
     freeChatAnswerKey: 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 using System.Linq;
@@ -127,7 +128,7 @@ public class StoryModeManager : MonoBehaviour
         {
             DialogueLine line = currentChapter.dialogueLines[currentLineIndex];
 
-            if (string.IsNullOrEmpty(line.dialogueText))
+            if (line.beats == null || line.beats.Count == 0)
             {
                 // 沒有台詞可講：跳過後端 LLM/TTS，直接套用這句的效果（顯示/隱藏物件等）
                 // 並往下推進，讓場景可以在 AI 開口前先讓特定物件出現/消失。
@@ -165,10 +166,11 @@ public class StoryModeManager : MonoBehaviour
             return;
         }
 
-        StoryPromptManager.Instance.RequestLine(currentStatus.ToString(), currentLineIndex, line.speakerName, line.dialogueText, playthroughId);
+        List<string> prompts = line.beats.Select(b => b.dialogueText).ToList();
+        StoryPromptManager.Instance.RequestLine(currentStatus.ToString(), currentLineIndex, line.speakerName, prompts, playthroughId);
     }
 
-    private void HandleDialogueResponse(string speaker, string generatedText)
+    private void HandleDialogueResponse(string speaker, string generatedText, List<string> segments)
     {
         Debug.Log($"[StoryModeManager] OnStoryLine received: speaker='{speaker}' (pending='{pendingSpeaker}'), lineIndex={currentLineIndex} (pending={pendingLineIndex})");
         if (speaker != pendingSpeaker || currentLineIndex != pendingLineIndex) return;
@@ -178,11 +180,46 @@ public class StoryModeManager : MonoBehaviour
         lineBeingSpokenText = generatedText;
 
         if (textManager != null) textManager.UpdateText(generatedText);
-        if (talker != null) talker.Speak(generatedText);
 
-        if (animator != null && lineBeingSpoken.HasValue)
+        List<string> triggers = lineBeingSpoken.Value.beats.Select(b => b.npcAnimationTrigger).ToList();
+
+        if (talker != null)
         {
-            animator.SetTrigger(lineBeingSpoken.Value.npcAnimationTrigger);
+            // 後端針對每個 beat.dialogueText 各自生成了一段回覆（segments[i] 對應 beats[i]），
+            // 但那一段本身可能是好幾句連在一起的話；這裡再依標點把每個 beat 拆成更細的句子，
+            // 讓字幕逐句更新、TTS 逐句播放（跟原本單一台詞的節奏一致），動畫 trigger 則仍然
+            // 只在每個 beat 的第一句開始播放時觸發一次，不會因為拆更細就重複觸發。
+            List<string> segmentsToSpeak = (segments != null && segments.Count > 0)
+                ? segments
+                : new List<string> { generatedText };
+
+            List<string> subSentences = new List<string>();
+            List<int> beatIndexOfSubSentence = new List<int>();
+            for (int beatIndex = 0; beatIndex < segmentsToSpeak.Count; beatIndex++)
+            {
+                foreach (string sentence in Talker.SplitIntoSentences(segmentsToSpeak[beatIndex]))
+                {
+                    subSentences.Add(sentence);
+                    beatIndexOfSubSentence.Add(beatIndex);
+                }
+            }
+
+            if (subSentences.Count > 0)
+            {
+                int lastFiredBeat = -1;
+                int subIndex = 0;
+                talker.Speak(subSentences, sentence =>
+                {
+                    int beatIndex = beatIndexOfSubSentence[subIndex];
+                    if (beatIndex != lastFiredBeat)
+                    {
+                        lastFiredBeat = beatIndex;
+                        if (animator != null && beatIndex < triggers.Count && !string.IsNullOrEmpty(triggers[beatIndex]))
+                            animator.SetTrigger(triggers[beatIndex]);
+                    }
+                    subIndex++;
+                });
+            }
         }
 
         Debug.Log($"[StoryModeManager] {speaker}: {generatedText}");

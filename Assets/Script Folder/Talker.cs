@@ -120,9 +120,41 @@ public class Talker : MonoBehaviour
         isGlobalSpeaking = false;
     }
 
+    // 給 StoryModeManager 用：句子已經由後端依動作切好（見 DialogueLine.npcAnimationTriggers），
+    // 不該再被字幕用的標點正規式重切一次，否則句子邊界會跟動作對不上。
+    public void Speak(IReadOnlyList<string> sentences, Action<string> onSentenceStart = null)
+    {
+        if (isGlobalSpeaking)
+        {
+            Debug.LogWarning("[Talker] 正在說話中，拒絕新的語音請求（多句版本）");
+            return;
+        }
+        StartCoroutine(SpeakCoroutine(sentences, onSentenceStart));
+    }
+
+    public IEnumerator SpeakCoroutine(IReadOnlyList<string> sentences, Action<string> onSentenceStart)
+    {
+        isGlobalSpeaking = true;
+
+        yield return ttsManager.SpeakSequenceCoroutine(sentences, sentence =>
+        {
+            if (SubtitleDisplayManager.Instance.subtitlePanel != null)
+                SubtitleDisplayManager.Instance.subtitlePanel.SetActive(true);
+            if (SubtitleDisplayManager.Instance.subtitleText != null)
+                SubtitleDisplayManager.Instance.subtitleText.text = sentence.Trim();
+
+            onSentenceStart?.Invoke(sentence);
+        });
+
+        SubtitleDisplayManager.Instance.HideSubtitle();
+        isGlobalSpeaking = false;
+    }
+
     private static readonly Regex SentenceRegex = new Regex(@"[^。！？!?；;]+[。！？!?；;]*");
 
-    private static string[] SplitIntoSentences(string text)
+    // public：StoryModeManager 也要用它把每個 beat 的完整回覆再依標點拆成字幕/語音的最小單位
+    // （動畫 trigger 仍按 beat 觸發，只有字幕跟語音的顆粒度變細，見 HandleDialogueResponse）。
+    public static string[] SplitIntoSentences(string text)
     {
         var sentences = new List<string>();
         foreach (Match m in SentenceRegex.Matches(text ?? ""))

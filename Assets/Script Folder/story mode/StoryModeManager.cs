@@ -236,6 +236,14 @@ public class StoryModeManager : MonoBehaviour
         lineBeingSpoken = null;
         lineBeingSpokenText = null;
 
+        ApplyLineEffectsAndAdvance(line, generatedText);
+    }
+
+    // Shared by both the normal "AI finished speaking this line" path
+    // (HandleLineSpeechCompleted) and the "dialogueText is empty, nothing to speak"
+    // path (PlayCurrentLine) — same show/hide/hint/advance behavior either way.
+    private void ApplyLineEffectsAndAdvance(DialogueLine line, string generatedText)
+    {
         if (line.objectsToShow != null)
             foreach (string tag in line.objectsToShow) OnShowObjectTag?.Invoke(tag);
         if (line.objectsToHide != null)

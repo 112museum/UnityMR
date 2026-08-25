@@ -65,8 +65,21 @@ MonoBehaviour:
     freeChatAnswerKey: 
     freeChatHint: 
     requiresInteraction: 1
-    taskTextPlayer1: "\u8ACB\u70BA\u4F60\u5011\u7684\u6EAB\u7897\u8ABF\u914D\u91C9\u6599\u984F\u8272\uFF01"
-    taskTextPlayer2: "\u8ACB\u70BA\u4F60\u5011\u7684\u6EAB\u7897\u8ABF\u914D\u91C9\u6599\u984F\u8272\uFF01"
+    taskTextPlayer1: "\u8ACB\u70BA\u4F60\u5011\u7684\u6EAB\u7897\u9078\u64C7\u91C9\u6599\u984F\u8272\uFF01"
+    taskTextPlayer2: "\u8ACB\u70BA\u4F60\u5011\u7684\u6EAB\u7897\u9078\u64C7\u91C9\u6599\u984F\u8272\uFF01"
     objectsToShow:
     - SwitchColor_Canva
+    objectsToHide: []
+  - speakerName: "\u4E7E\u9686\u5E1D(\u611B\u65B0\u89BA\u7F85\xB7\u5F18\u66C6)"
+    beats:
+    - dialogueText: "\u7BC4\u4F8B\u8F38\u51FA\uFF1A\u300C\u65E2\u7136\u4F60\u5011\u6C7A\u5B9A\u597D\u984F\u8272\u4E86\uFF0C\u63A5\u4E0B\u4F86\u5C31\u662F\u5C07\u6307\u5B9A\u984F\u6599\u6295\u5165\u91C9\u6599\u9676\u7F50\u4E86\u3002\u300D"
+      npcAnimationTrigger: 
+    startsFreeChat: 0
+    freeChatSuccessKeyword: 
+    freeChatAnswerKey: 
+    freeChatHint: 
+    requiresInteraction: 1
+    taskTextPlayer1: "\u53EF\u4EE5\u958B\u59CB\u8ABF\u914D\u91C9\u6599\u4E86\uFF01\u8ACB\u5C07\u6307\u5B9A\u984F\u6599\u653E\u9032\u76C6\u5167\uFF01"
+    taskTextPlayer2: "\u53EF\u4EE5\u958B\u59CB\u8ABF\u914D\u91C9\u6599\u4E86\uFF01\u8ACB\u5C07\u6307\u5B9A\u984F\u6599\u653E\u9032\u76C6\u5167\uFF01"
+    objectsToShow: []
     objectsToHide: []

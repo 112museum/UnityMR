@@ -44,6 +44,9 @@ public class PhotonKilnBurningManager : MonoBehaviourPun, IPunObservable
     [Header("完成事件")]
     public UnityEvent onBurnComplete;
 
+    [Header("各階段專屬的完成效果，索引要跟 burnStages 對齊（stageCompleteEvents[0] 對應第 1 階段，含最後一個階段）")]
+    [SerializeField] private UnityEvent[] stageCompleteEvents;
+
     public float BurnProgress { get; private set; }
 
     // 目前正在挑戰第幾階段（0-based）。給 FireSeedTestStoryManager 這類外部腳本讀取，
@@ -148,19 +151,35 @@ public class PhotonKilnBurningManager : MonoBehaviourPun, IPunObservable
     }
 
     // MasterClient 判定某一階段過關時廣播給房間所有人（含自己），這樣非 MasterClient
-    // 的裝置也能知道目前是第幾階段，把區間色塊換到下一階段該顯示的位置。
+    // 的裝置也能知道目前是第幾階段，把區間色塊換到下一階段該顯示的位置，
+    // 同時觸發這一階段專屬的完成效果（stageCompleteEvents）。
     [PunRPC]
     private void RpcAdvanceStage(int nextStageIndex)
     {
+        int completedStageIndex = nextStageIndex - 1; // 剛過關的是「下一階段」的前一個
         _currentStageIndex = nextStageIndex;
         _timeInRange = 0f;
         UpdateTargetRangeIndicator();
+
+        InvokeStageCompleteEvents(completedStageIndex);
     }
 
     [PunRPC]
     private void RpcBurnComplete()
     {
-        // 房間裡兩台 HoloLens 都會收到，各自播放燒製完成特效、開放後續貼紙客製化流程
+        // 最後一個階段不會走 RpcAdvanceStage，_currentStageIndex 這時候還停在最後一個階段的
+        // 索引（Update() 判定全部完成時沒有再往上加），所以這裡直接拿來當「剛完成的階段」用。
+        // stageCompleteEvents 才會真的含最後一個階段；onBurnComplete 是全部完成的收尾事件。
+        // 房間裡兩台 HoloLens 都會收到，各自播放對應特效、開放後續貼紙客製化流程。
+        InvokeStageCompleteEvents(_currentStageIndex);
         onBurnComplete?.Invoke();
+    }
+
+    private void InvokeStageCompleteEvents(int completedStageIndex)
+    {
+        if (stageCompleteEvents != null && completedStageIndex >= 0 && completedStageIndex < stageCompleteEvents.Length)
+        {
+            stageCompleteEvents[completedStageIndex]?.Invoke();
+        }
     }
 }

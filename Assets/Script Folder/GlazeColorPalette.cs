@@ -34,9 +34,12 @@ public class GlazeColorPalette : MonoBehaviourPun
     public UnityEvent onColorConfirmed;
 
     [Header("調色面板")]
-    [SerializeField] private GameObject switchColorCanvas;
+    [SerializeField] private GameObject ChangeColorCanvas;
 
-    [Header("顏色真正套到碗本體後觸發")]
+    [Header("顏料指定面板")]
+    [SerializeField] private GameObject AddPigmentCanvas;
+
+    [Header("顏色真正套到碗本體後觸發(動畫特效之類的)")]
     public UnityEvent onColorAppliedToBowl;
 
     public int SelectedIndex { get; private set; } = -1;
@@ -97,6 +100,11 @@ public class GlazeColorPalette : MonoBehaviourPun
         }
     }
 
+    // 給碗以外的物件讀取「玩家已確認的顏色」用（例如顏料容器裝滿後要在自己原本的材質上
+    // 改色，而不是套用碗專用的 glazeGrayscaleMaterial）。沒選色/沒確認時回傳 null，
+    // 呼叫端自行決定沒顏色時要怎麼處理。
+    public Color? ConfirmedColor => IsConfirmed && SelectedIndex >= 0 ? paletteColors[SelectedIndex] : (Color?)null;
+
     [PunRPC]
     private void RpcApplyColor(int colorIndex)
     {
@@ -109,7 +117,8 @@ public class GlazeColorPalette : MonoBehaviourPun
     private void RpcConfirm()
     {
         IsConfirmed = true;
-        if (switchColorCanvas != null) switchColorCanvas.SetActive(false);
+        if (ChangeColorCanvas != null) ChangeColorCanvas.SetActive(false);
+        if (AddPigmentCanvas != null) AddPigmentCanvas.SetActive(true);
         onColorConfirmed?.Invoke();
     }
 

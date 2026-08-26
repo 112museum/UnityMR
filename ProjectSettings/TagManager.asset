@@ -14,6 +14,10 @@ TagManager:
   - AOI_VirtualScene
   - AOI_PhysicalExhibits
   - AOI_Poster
+  - FreeChat_Button
+  - Pickup
+  - Exhibit_Bowl
+  - GlazeLiquid
   layers:
   - Default
   - TransparentFX

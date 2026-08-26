@@ -56,6 +56,19 @@ public class PigmentContainer : MonoBehaviourPun
         public int remainingCount;
     }
 
+    // 記錄某個 Renderer 材質漸變當下要改哪個顏色屬性、從哪個顏色開始（不同 shader 用的
+    // 屬性名稱不一樣，_Color 或 _BaseColor，先在漸變開始時各自判斷一次，之後每幀就不用再判斷）。
+    private class RendererColorFade
+    {
+        public Material material;
+        public string propertyName;
+        public Color startColor;
+        public Color targetColor; // 已經混過 colorIntensity 的最終顏色，不是純確認色
+    }
+
+    // 顏色漸變的固定秒數，不開放 Inspector 調整
+    private const float ColorTransitionDuration = 1.5f;
+
     [Header("已選色的調色盤（8 色），也是完成後套色的來源")]
     [SerializeField] private GlazeColorPalette glazeColorPalette;
 
@@ -74,8 +87,12 @@ public class PigmentContainer : MonoBehaviourPun
     [Header("文字最前面固定的提示字，後面接每種顏料還缺幾個")]
     [SerializeField] private string panelPrefix = "需要顏料：";
 
-    [Header("放完顏料後要變色的目標物件（不是碗本體）")]
+    [Header("放完顏料礦石後要變色的釉料")]
     [SerializeField] private Renderer[] targetRenderers;
+
+    [Header("變色程度")]
+    [Range(0f, 1f)]
+    [SerializeField] private float colorIntensity = 1f;
 
     [Header("放完所有顏料後觸發（推進劇情用，掛 StoryModeManager.OnPlayerInteractSuccess）")]
     public UnityEvent onAllPigmentsAdded;
@@ -88,6 +105,11 @@ public class PigmentContainer : MonoBehaviourPun
     private readonly List<string> collectedPigmentIds = new List<string>();
 
     private bool _isComplete;
+
+    // 顏色漸變狀態，由 StartColorFade() 設定、Update() 逐幀推進
+    private readonly List<RendererColorFade> _fades = new List<RendererColorFade>();
+    private float _fadeElapsed;
+    private bool _isFading;
 
     private void Start()
     {
@@ -173,28 +195,59 @@ public class PigmentContainer : MonoBehaviourPun
 
         if (SwitchColorCanvas != null) SwitchColorCanvas.SetActive(false); // 面板隱藏
 
-        ApplyColorToTargetRenderers(); // 在目標物件自己原本的材質上改色（不是套碗專用材質）
+        StartColorFade(); // 開始漸變（在 Update() 裡逐幀推進，不用 Coroutine）
 
-        onAllPigmentsAdded?.Invoke(); // 轉到下一幕（掛 StoryModeManager.OnPlayerInteractSuccess）
+        onAllPigmentsAdded?.Invoke(); // 跟顏色漸變同時觸發，不等漸變播完
     }
 
-    // 保留 targetRenderers 原本的材質/貼圖/shader，只把顏色改成玩家已確認的那個顏色
-    // （跟碗同一份 Color 值，但不套用碗專用的 glazeGrayscaleMaterial）。
-    private void ApplyColorToTargetRenderers()
+    // 保留 targetRenderers 原本的材質/貼圖/shader，記錄每個 Renderer 現在的顏色跟要漸變到的
+    // 目標顏色，實際推進交給 Update() 逐幀處理。目標顏色不是直接套用確認色本身，而是用
+    // colorIntensity 跟原本的顏色混一次（濃度沒到 1 就會保留一部分原色，看起來比較不鮮豔）。
+    // 這段是在 RpcAddPigment 裡被呼叫的，本來就已經在兩個 client 上各自執行一次，
+    // 兩邊會各自跑自己的漸變（同樣的固定秒數、同樣的目標顏色），不用再額外用 RPC 同步。
+    private void StartColorFade()
     {
-        if (glazeColorPalette == null || targetRenderers == null) return;
+        Color? targetColor = glazeColorPalette != null ? glazeColorPalette.ConfirmedColor : null;
+        if (targetColor == null || targetRenderers == null) return;
 
-        Color? color = glazeColorPalette.ConfirmedColor;
-        if (color == null) return;
+        Color confirmedColor = targetColor.Value;
+
+        _fades.Clear();
 
         foreach (Renderer rend in targetRenderers)
         {
             if (rend == null) continue;
 
             Material mat = rend.material; // 第一次存取時 Unity 會自動生成這顆 renderer 專屬的材質實例
-            if (mat.HasProperty("_Color")) mat.SetColor("_Color", color.Value);
-            else if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color.Value);
+
+            string propertyName = null;
+            if (mat.HasProperty("_Color")) propertyName = "_Color";
+            else if (mat.HasProperty("_BaseColor")) propertyName = "_BaseColor";
+            if (propertyName == null) continue;
+
+            Color startColor = mat.GetColor(propertyName);
+            Color blendedTargetColor = Color.Lerp(startColor, confirmedColor, colorIntensity);
+
+            _fades.Add(new RendererColorFade { material = mat, propertyName = propertyName, startColor = startColor, targetColor = blendedTargetColor });
         }
+
+        _fadeElapsed = 0f;
+        _isFading = _fades.Count > 0;
+    }
+
+    private void Update()
+    {
+        if (!_isFading) return;
+
+        _fadeElapsed += Time.deltaTime;
+        float t = Mathf.Clamp01(_fadeElapsed / ColorTransitionDuration);
+
+        foreach (RendererColorFade fade in _fades)
+        {
+            fade.material.SetColor(fade.propertyName, Color.Lerp(fade.startColor, fade.targetColor, t));
+        }
+
+        if (t >= 1f) _isFading = false;
     }
 
     private string GetDisplayName(string pigmentId)

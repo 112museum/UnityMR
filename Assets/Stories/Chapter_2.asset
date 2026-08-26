@@ -83,3 +83,15 @@ MonoBehaviour:
     taskTextPlayer2: "\u53EF\u4EE5\u958B\u59CB\u8ABF\u914D\u91C9\u6599\u4E86\uFF01\u8ACB\u5C07\u6307\u5B9A\u984F\u6599\u653E\u9032\u76C6\u5167\uFF01"
     objectsToShow: []
     objectsToHide: []
+  - speakerName: "\u4E7E\u9686\u5E1D(\u611B\u65B0\u89BA\u7F85\xB7\u5F18\u66C6)"
+    beats: []
+    startsFreeChat: 0
+    freeChatSuccessKeyword: 
+    freeChatAnswerKey: 
+    freeChatHint: 
+    requiresInteraction: 1
+    taskTextPlayer1: "\u8ACB\u5C07\u7D20\u576F\u6D78\u65BC\u91C9\u6599\u4E2D\uFF0C\u518D\u5C07\u5176\u79FB\u81F3\u7AAF\u7210\u5167\uFF01"
+    taskTextPlayer2: "\u8ACB\u5C07\u7D20\u576F\u6D78\u65BC\u91C9\u6599\u4E2D\uFF0C\u518D\u5C07\u5176\u79FB\u81F3\u7AAF\u7210\u5167\uFF01"
+    objectsToShow:
+    - Fire_Scene
+    objectsToHide: []

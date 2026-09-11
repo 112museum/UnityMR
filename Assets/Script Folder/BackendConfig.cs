@@ -4,5 +4,12 @@
 // 改成這裡統一管理，之後只要改這一行，全部一起生效，不用再挨個場景挨個元件找。
 public static class BackendConfig
 {
-    public static string Url = "http://192.168.0.76:5050";
+    private const string Host = "192.168.1.105";
+
+    // NPCRequestManager、StoryPromptManager、GroupChatManager 用的 aibackend（Socket.IO）
+    public static string Url = $"http://{Host}:5050";
+
+    // GroupPhotoEmailPrompt 用的 MRmuseum-backend（FastAPI），跟上面共用同一台機器的 IP，
+    // 只是 port 不同——換網路時只要改上面的 Host，兩邊會一起跟著換。
+    public static string PhotoApiUrl = $"http://{Host}:3000/photo/email";
 }

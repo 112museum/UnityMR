@@ -24,6 +24,5 @@ MonoBehaviour:
     taskTextPlayer1: 
     taskTextPlayer2: 
     objectsToShow:
-    - ColorBlindFilterOn
-    - SwitchColor_Canva
+    - GroupPhotoTrigger
     objectsToHide: []

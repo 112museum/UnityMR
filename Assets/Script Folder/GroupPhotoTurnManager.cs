@@ -32,9 +32,21 @@ public class GroupPhotoTurnManager : MonoBehaviourPunCallbacks
     public Button photoButton;
     public GameObject triggerPanel;
 
+    // 這支腳本掛在跟 GroupPhotoCapture / GroupPhotoEmailPrompt 同一個「一直存在」的
+    // GameObject 上（見類別上方的掛載說明），不像 triggerPanel 本身會被 StoryObjectVisibility
+    // 依照劇情行進 SetActive(true/false)。也因此如果不擋著，Start() 會在場景一載入、
+    // 只要 Photon 房間已經有兩人時就直接執行完 TryDecidePhotographerOrder()，把 triggerPanel
+    // 打開——完全無視劇情目前播到哪一句。HoloLens 正式雙人連線一開場兩人通常就已經都在房間裡了，
+    // 所以會在劇情一開始就看到合照面板；Editor 常常是單機測試、房間裡不到兩人，才「看起來沒事」。
+    // 修法：跟 StoryObjectVisibility 一樣訂閱 StoryModeManager 的顯示事件，直到劇情真的播到
+    // 「顯示 GroupPhotoTrigger」這一句之前，完全不跑這支腳本的任何邏輯。
+    [Tooltip("劇情資料（DialogueLine.objectsToShow）用來顯示合照面板的 tag，需與 Story 資料裡的字串一致。")]
+    public string storyShowTag = "GroupPhotoTrigger";
+
     private TurnState state;
     private bool isFirstPhotographer;
     private bool _orderDecided;
+    private bool _storyTriggered;
 
     private void Start()
     {
@@ -47,6 +59,31 @@ public class GroupPhotoTurnManager : MonoBehaviourPunCallbacks
             photoCapture.onPhotoFailed.AddListener(HandlePhotoFailed);
         }
 
+        if (StoryModeManager.Instance != null)
+        {
+            StoryModeManager.Instance.OnShowObjectTag += HandleStoryShowTag;
+        }
+        else
+        {
+            Debug.LogError("[GroupPhotoTurnManager] StoryModeManager.Instance 是 null，無法得知劇情何時播到合照，先不做任何事");
+        }
+
+        // 不在這裡呼叫 TryDecidePhotographerOrder()——要等劇情真的顯示 GroupPhotoTrigger 才開始。
+    }
+
+    private void OnDestroy()
+    {
+        if (StoryModeManager.Instance != null)
+        {
+            StoryModeManager.Instance.OnShowObjectTag -= HandleStoryShowTag;
+        }
+    }
+
+    private void HandleStoryShowTag(string tag)
+    {
+        if (tag != storyShowTag || _storyTriggered) return;
+
+        _storyTriggered = true;
         TryDecidePhotographerOrder();
     }
 
@@ -64,6 +101,12 @@ public class GroupPhotoTurnManager : MonoBehaviourPunCallbacks
 
     private void TryDecidePhotographerOrder()
     {
+        if (!_storyTriggered)
+        {
+            // 劇情還沒播到合照橋段，房間人數/加入事件都先忽略，避免面板提早跳出來。
+            return;
+        }
+
         if (_orderDecided)
         {
             Debug.Log("[GroupPhotoTurnManager] TryDecidePhotographerOrder() 略過，已經決定過順序");
@@ -96,7 +139,7 @@ public class GroupPhotoTurnManager : MonoBehaviourPunCallbacks
         if (isFirstPhotographer)
             EnterReadyToShoot("請先幫對方開始拍照！");
         else
-            EnterWaitingForPartner("請先讓對方幫您拍照！");
+            EnterWaitingForPartner("請先讓對方幫您拍照 請把眼鏡拿下！");
     }
 
     // 掛在 Take Photo Button 的 OnClick（取代原本直接呼叫 GroupPhotoCapture.TakeGroupPhoto()）。
@@ -150,7 +193,7 @@ public class GroupPhotoTurnManager : MonoBehaviourPunCallbacks
             }
             else
             {
-                EnterWaitingPartnerFinish("換對方幫您拍照了！請稍候...");
+                EnterWaitingPartnerFinish("換對方幫您拍照了 請把眼鏡拿下！");
             }
         }
         else

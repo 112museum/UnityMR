@@ -104,6 +104,14 @@ public class PigmentContainer : MonoBehaviourPun
     // 供之後如果要檢查玩家操作紀錄、除錯用。
     private readonly List<string> collectedPigmentIds = new List<string>();
 
+    // 記錄「哪些顏料物件（PhotonView ViewID）已經算過」。雙人連線時，A、B 兩邊的
+    // client 可能各自用自己的本地物理偵測到同一顆丟進來的顏料礦石（例如 A 丟出去、
+    // B 那邊的同步物件也各自跑物理判斷），於是兩邊各自送出一次 RPC，同一顆礦石被
+    // 算了兩次。這裡用礦石自己的 PhotonView ViewID（全房間唯一）當作是否已處理過的
+    // 依據，RpcAddPigment 在每個 client 上執行時都會查這份清單，第二次收到同一顆
+    // 礦石的 RPC 直接略過，不會重複扣需求數。
+    private readonly HashSet<int> processedPigmentViewIds = new HashSet<int>();
+
     private bool _isComplete;
 
     // 顏色漸變狀態，由 StartColorFade() 設定、Update() 逐幀推進
@@ -154,13 +162,26 @@ public class PigmentContainer : MonoBehaviourPun
         PigmentItem pigment = other.GetComponentInParent<PigmentItem>();
         if (pigment == null || string.IsNullOrEmpty(pigment.pigmentId)) return;
 
-        photonView.RPC(nameof(RpcAddPigment), RpcTarget.All, pigment.pigmentId);
+        // 同一罐顏料只能算一次：VR 丟擲的物件掉進容器後常常會因為碰撞內壁彈一下，
+        // 讓同一次丟擲觸發不只一次 OnTriggerEnter，如果沒擋掉會被重複計入。這只擋得住
+        // 「本機自己重複觸發」，雙人各自偵測到同一顆礦石的情況要靠下面的 ViewID 去重。
+        if (pigment.hasBeenCounted) return;
+        pigment.hasBeenCounted = true;
+
+        PhotonView pigmentView = pigment.GetComponent<PhotonView>();
+        int viewId = pigmentView != null ? pigmentView.ViewID : 0;
+
+        photonView.RPC(nameof(RpcAddPigment), RpcTarget.All, pigment.pigmentId, viewId);
     }
 
     [PunRPC]
-    private void RpcAddPigment(string pigmentId)
+    private void RpcAddPigment(string pigmentId, int pigmentViewId)
     {
         if (_isComplete) return;
+
+        // pigmentViewId 為 0 代表這顆礦石沒有 PhotonView（理論上不會發生），
+        // 這種情況就不去重，維持原本行為，避免漏算。
+        if (pigmentViewId != 0 && !processedPigmentViewIds.Add(pigmentViewId)) return;
 
         collectedPigmentIds.Add(pigmentId); // 記錄什麼顏料進去了
 

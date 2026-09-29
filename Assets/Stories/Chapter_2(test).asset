@@ -39,7 +39,8 @@ MonoBehaviour:
     requiresInteraction: 1
     taskTextPlayer1: "\u53EF\u4EE5\u958B\u59CB\u8ABF\u914D\u91C9\u6599\u4E86\uFF01\u8ACB\u5C07\u6307\u5B9A\u984F\u6599\u653E\u9032\u76C6\u5167\uFF01"
     taskTextPlayer2: "\u53EF\u4EE5\u958B\u59CB\u8ABF\u914D\u91C9\u6599\u4E86\uFF01\u8ACB\u5C07\u6307\u5B9A\u984F\u6599\u653E\u9032\u76C6\u5167\uFF01"
-    objectsToShow: []
+    objectsToShow:
+    - pot&pigment
     objectsToHide: []
   - speakerName: "\u4E7E\u9686\u5E1D(\u611B\u65B0\u89BA\u7F85\xB7\u5F18\u66C6)"
     beats: []

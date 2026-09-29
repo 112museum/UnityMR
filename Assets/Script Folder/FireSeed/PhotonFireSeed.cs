@@ -11,8 +11,14 @@ public class PhotonFireSeed : MonoBehaviourPun, IPunObservable
 {
     private FireSeedButton _button;
 
+    // GetComponent 不受物件啟用狀態影響，Awake()/OnEnable() 才會；如果這顆火種一開始是關閉的
+    // （例如「kiln 出現後、特定觸發才出現」這種流程），Awake() 在它第一次被 SetActive(true)
+    // 之前根本不會執行，_button 會是 null。PhotonKilnBurningManager 卻是掛在一直啟用的窯爐上，
+    // 從場景一開始每一幀都會呼叫這個屬性，所以改成惰性取得，不依賴 Awake() 一定跑過。
+    private FireSeedButton Button => _button ??= GetComponent<FireSeedButton>();
+
     // 給 PhotonKilnBurningManager 讀取：不管本機是不是 owner，這裡永遠是目前同步後的按住狀態
-    public bool IsHeldNetworked => _button.IsHeld;
+    public bool IsHeldNetworked => Button.IsHeld;
 
     private void Awake()
     {
@@ -21,12 +27,12 @@ public class PhotonFireSeed : MonoBehaviourPun, IPunObservable
 
     private void OnEnable()
     {
-        _button.onPressStart.AddListener(HandleLocalPressStart);
+        Button.onPressStart.AddListener(HandleLocalPressStart);
     }
 
     private void OnDisable()
     {
-        _button.onPressStart.RemoveListener(HandleLocalPressStart);
+        Button.onPressStart.RemoveListener(HandleLocalPressStart);
     }
 
     private void HandleLocalPressStart()

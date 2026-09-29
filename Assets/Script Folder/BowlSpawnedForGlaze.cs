@@ -34,8 +34,16 @@ public class BowlSpawnedForGlaze : MonoBehaviourPun
         ColorBlindFilterToggle.Instance?.RegisterTargetRenderers(_bowlRenderers);
 
         // 在 Start() 就各自本機找一次 liquid 的 Renderer 存起來（跟找 GlazeColorPalette 的做法一樣），
-        // 不要等 OnTriggerEnter 才抓，因為碰撞事件不保證兩個 client 都會各自觸發一次，
-        // 但兩個 client 各自的場景裡都有同一個 liquid 物件，Start() 時就都找得到。
+        // 不要等 OnTriggerEnter 才抓，因為碰撞事件不保證兩個 client 都會各自觸發一次。
+        // 這只是先搶快取，如果失敗（例如雙人連線時，這顆碗的 Start() 在自己這端執行的當下，
+        // liquid 物件剛好還沒準備好），RpcDipIntoLiquid 真正要用到的時候還會再找一次。
+        CacheLiquidRenderer();
+    }
+
+    private void CacheLiquidRenderer()
+    {
+        if (_liquidRenderer != null) return;
+
         GameObject liquidObject = GameObject.FindWithTag(liquidTag);
         if (liquidObject != null) _liquidRenderer = liquidObject.GetComponent<Renderer>();
     }
@@ -52,6 +60,10 @@ public class BowlSpawnedForGlaze : MonoBehaviourPun
     private void RpcDipIntoLiquid()
     {
         if (_palette != null && _palette.IsAppliedToBowl) return; // RPC 送達時可能已經套過正式顏色，再擋一次
+
+        // 保險：Start() 當下如果沒找到 liquid（雙人連線時序問題），這裡碰撞當下已經確定
+        // liquid 物件存在了，再找一次補救，避免永遠卡在 null 而不換色。
+        CacheLiquidRenderer();
         if (_liquidRenderer == null || _bowlRenderers == null) return;
 
         foreach (Renderer rend in _bowlRenderers)

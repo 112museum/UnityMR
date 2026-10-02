@@ -8063,12 +8063,15 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1369509744}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 23730bb30c4f8cd4fb014a4e9901a61e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   overlayRenderers: []
+  alwaysVisible: 1
+  snapToAnchorCenter: 1
+  grabbable: 1
 --- !u!1 &1376180090
 GameObject:
   m_ObjectHideFlags: 0

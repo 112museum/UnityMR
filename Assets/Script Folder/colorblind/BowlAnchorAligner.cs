@@ -25,11 +25,14 @@ public class BowlAnchorAligner : MonoBehaviour
     [Tooltip("If false, this transform is set once on first detection and then locked. If true, it keeps snapping to the latest detection (can jitter the overlay already sitting on it).")]
     [SerializeField] private bool continuousAlignment = false;
 
-    [Tooltip("Local-space offset (relative to the QR code's own orientation) applied when placing this anchor, for when the code isn't stuck exactly where the overlay should be centered.")]
+    [Tooltip("Offset (in the anchor's own upright frame when keepUpright is on, else the QR's frame) applied when placing this anchor, for when the code isn't stuck exactly where the overlay should be centered.")]
     [SerializeField] private Vector3 anchorPositionOffset = Vector3.zero;
 
     [Tooltip("Extra rotation (degrees) applied on top of the QR code's orientation.")]
     [SerializeField] private Vector3 anchorRotationOffsetEuler = Vector3.zero;
+
+    [Tooltip("Keep this anchor upright in world space (only take the QR's yaw), so the bowl stands upright whether the QR lies flat on the table or is stuck on a vertical surface.")]
+    [SerializeField] private bool keepUpright = true;
 
     [Tooltip("Logs every marker the subsystem detects (decoded text included), not just ones matching expectedQrText. Turn on while diagnosing why alignment isn't happening.")]
     [SerializeField] private bool verboseLogging = true;
@@ -48,6 +51,10 @@ public class BowlAnchorAligner : MonoBehaviour
     private void Awake()
     {
         markerManager = GetComponent<ARMarkerManager>();
+
+        // Default (MostStable) puts the marker origin at the QR's corner; Center puts it at the
+        // QR's geometric center, which is where the bowl should sit.
+        markerManager.defaultTransformMode = TransformMode.Center;
 
         // Same reasoning as QRAnchorAligner: HoloLens caches detected QR codes at the
         // OS/driver level, so a reading from before this app session started must be
@@ -149,8 +156,9 @@ public class BowlAnchorAligner : MonoBehaviour
         }
 
         var markerTransform = marker.transform;
-        var rotation = markerTransform.rotation * Quaternion.Euler(anchorRotationOffsetEuler);
-        var position = markerTransform.position + markerTransform.TransformDirection(anchorPositionOffset);
+        var baseRotation = keepUpright ? UprightYaw(markerTransform) : markerTransform.rotation;
+        var rotation = baseRotation * Quaternion.Euler(anchorRotationOffsetEuler);
+        var position = markerTransform.position + rotation * anchorPositionOffset;
 
         transform.SetPositionAndRotation(position, rotation);
 
@@ -159,5 +167,17 @@ public class BowlAnchorAligner : MonoBehaviour
             IsAligned = true;
             Aligned?.Invoke();
         }
+    }
+
+    // Whichever of the marker's in-plane/normal axes is most horizontal gives the yaw; world up stays up.
+    private static Quaternion UprightYaw(Transform t)
+    {
+        var best = Vector3.zero;
+        foreach (var axis in new[] { t.forward, t.up, t.right })
+        {
+            var flat = Vector3.ProjectOnPlane(axis, Vector3.up);
+            if (flat.sqrMagnitude > best.sqrMagnitude) best = flat;
+        }
+        return best.sqrMagnitude > 1e-6f ? Quaternion.LookRotation(best.normalized, Vector3.up) : Quaternion.identity;
     }
 }

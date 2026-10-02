@@ -24,6 +24,11 @@ public class ColorBlindFilterToggle : MonoBehaviour
 
     public static ColorBlindFilterToggle Instance { get; private set; }
 
+    // 給疊放在實體展品上的校色模型（例如 PhysicalBowlFilterOverlay）訂閱用：濾鏡實際
+    // 開/關的當下會發這個事件，讓那些物件知道現在該不該顯示，不用自己 polling isFilterOn。
+    public event Action<bool> FilterStateChanged;
+    public bool IsFilterOn => isFilterOn;
+
     [Header("要套用色弱濾鏡的物件（例如展品、調色盤）")]
     public Renderer[] targetRenderers;
 
@@ -197,6 +202,7 @@ public class ColorBlindFilterToggle : MonoBehaviour
         ApplyMultipliers();
         ApplyToTargets(true);
         isFilterOn = true;
+        FilterStateChanged?.Invoke(true);
         Debug.Log($"[ColorBlindFilterToggle] 濾鏡已套用：type={detectedType}, intensity={intensity}, targets={targetRenderers?.Length ?? 0}");
     }
 
@@ -212,6 +218,7 @@ public class ColorBlindFilterToggle : MonoBehaviour
         {
             isFilterOn = false;
             ApplyToTargets(false);
+            FilterStateChanged?.Invoke(false);
             return;
         }
 
@@ -225,6 +232,7 @@ public class ColorBlindFilterToggle : MonoBehaviour
         ApplyMultipliers();
         ApplyToTargets(true);
         isFilterOn = true;
+        FilterStateChanged?.Invoke(true);
     }
 
     // 幫每個目標物件各自準備一份「濾鏡材質」，保留該物件「目前」的貼圖/顏色(_MainTex)，

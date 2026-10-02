@@ -34,6 +34,9 @@ public class BowlAnchorAligner : MonoBehaviour
     [Tooltip("Keep this anchor upright in world space (only take the QR's yaw), so the bowl stands upright whether the QR lies flat on the table or is stuck on a vertical surface.")]
     [SerializeField] private bool keepUpright = true;
 
+    [Tooltip("Until a QR is scanned, park this anchor in front of the user's head shortly after launch, so the overlay is visible right away instead of sitting at the world origin (= inside the user's head).")]
+    [SerializeField] private bool placeInFrontOnStart = true;
+
     [Tooltip("Logs every marker the subsystem detects (decoded text included), not just ones matching expectedQrText. Turn on while diagnosing why alignment isn't happening.")]
     [SerializeField] private bool verboseLogging = true;
 
@@ -63,12 +66,18 @@ public class BowlAnchorAligner : MonoBehaviour
         lastRestartCheckTime = sessionStartTime;
     }
 
-    private void Start()
+    private System.Collections.IEnumerator Start()
     {
+        if (placeInFrontOnStart)
+        {
+            StartCoroutine(PlaceInFrontOfCamera());
+        }
+
         if (verboseLogging)
         {
             Debug.Log($"[BowlAnchorAligner] Start. subsystem running={markerManager.subsystem != null}, enabledMarkerTypes={string.Join(",", markerManager.enabledMarkerTypes)}, expecting text='{expectedQrText}'");
         }
+        yield break;
     }
 
     private void Update()
@@ -167,6 +176,20 @@ public class BowlAnchorAligner : MonoBehaviour
             IsAligned = true;
             Aligned?.Invoke();
         }
+    }
+
+    private System.Collections.IEnumerator PlaceInFrontOfCamera()
+    {
+        // Head tracking isn't valid on the very first frames, so wait a moment first.
+        yield return new WaitForSeconds(1f);
+        var cam = Camera.main;
+        if (IsAligned || cam == null) yield break;
+
+        var flatForward = Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up);
+        if (flatForward.sqrMagnitude < 1e-6f) flatForward = Vector3.forward;
+        flatForward.Normalize();
+        transform.SetPositionAndRotation(cam.transform.position + flatForward * 1f + Vector3.down * 0.3f,
+                                         Quaternion.LookRotation(flatForward, Vector3.up));
     }
 
     // Whichever of the marker's in-plane/normal axes is most horizontal gives the yaw; world up stays up.

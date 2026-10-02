@@ -38,7 +38,13 @@ public class PhysicalBowlFilterOverlay : MonoBehaviour
     [Tooltip("自動加 Collider + ObjectManipulator，讓虛擬碗可以用手捏住拖曳對位。")]
     [SerializeField] private bool grabbable = true;
 
+    [Tooltip("視野下方顯示一行除錯文字（碗的距離/方向、QR 是否對齊、是否顯示）。正式錄影前取消勾選。")]
+    [SerializeField] private bool showDebugHud = true;
+
     private Collider grabCollider;
+    private TextMesh debugText;
+    private BowlAnchorAligner anchorAligner;
+    private float nextHudUpdate;
 
     private void Start()
     {
@@ -46,6 +52,17 @@ public class PhysicalBowlFilterOverlay : MonoBehaviour
         {
             overlayRenderers = GetComponentsInChildren<Renderer>(includeInactive: true);
         }
+
+        // 溫碗 prefab 裡的模型帶了一個會受重力影響的 Rigidbody（給其他功能用的），疊放用的碗
+        // 一放手就會往下掉到地板，所以這裡全部改成 kinematic、不受重力。
+        foreach (var rb in GetComponentsInChildren<Rigidbody>(includeInactive: true))
+        {
+            rb.useGravity = false;
+            rb.isKinematic = true;
+        }
+
+        anchorAligner = GetComponentInParent<BowlAnchorAligner>();
+        if (showDebugHud) CreateDebugHud();
 
         // 這兩步都要在 SetVisible 關掉 Renderer 之前做，關掉的 Renderer 抓不到正確外框。
         if (snapToAnchorCenter) SnapBottomCenterToParent();
@@ -71,6 +88,54 @@ public class PhysicalBowlFilterOverlay : MonoBehaviour
         {
             ColorBlindFilterToggle.Instance.FilterStateChanged -= SetVisible;
         }
+    }
+
+    private void CreateDebugHud()
+    {
+        var cam = Camera.main;
+        if (cam == null) return;
+
+        var go = new GameObject("BowlDebugHud");
+        go.transform.SetParent(cam.transform, false);
+        go.transform.localPosition = new Vector3(0f, -0.12f, 0.8f);
+
+        debugText = go.AddComponent<TextMesh>();
+        var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        debugText.font = font;
+        go.GetComponent<MeshRenderer>().sharedMaterial = font.material;
+        debugText.fontSize = 48;
+        debugText.characterSize = 0.004f;
+        debugText.anchor = TextAnchor.UpperCenter;
+        debugText.alignment = TextAlignment.Center;
+        debugText.color = Color.yellow;
+    }
+
+    private void Update()
+    {
+        if (debugText == null || Time.time < nextHudUpdate) return;
+        nextHudUpdate = Time.time + 0.3f;
+
+        var cam = Camera.main;
+        if (cam == null) return;
+
+        string where = "no renderer";
+        if (TryGetWorldBounds(out var b))
+        {
+            var local = cam.transform.InverseTransformPoint(b.center);
+            where = $"bowl {local.magnitude:0.0}m  " +
+                    $"{(local.z >= 0 ? "front" : "BEHIND")} {Mathf.Abs(local.z):0.0} / " +
+                    $"{(local.x >= 0 ? "right" : "left")} {Mathf.Abs(local.x):0.0} / " +
+                    $"{(local.y >= 0 ? "up" : "down")} {Mathf.Abs(local.y):0.0}";
+        }
+
+        int shown = 0;
+        foreach (var rend in overlayRenderers) if (rend != null && rend.enabled) shown++;
+
+        debugText.text = where +
+            "\n" +
+            $"QR aligned: {(anchorAligner != null && anchorAligner.IsAligned ? "YES" : "no")}" +
+            $"   visible: {shown}/{overlayRenderers.Length}" +
+            $"   filter: {(ColorBlindFilterToggle.Instance == null ? "MISSING" : (ColorBlindFilterToggle.Instance.IsFilterOn ? "on" : "off"))}";
     }
 
     private bool TryGetWorldBounds(out Bounds bounds)

@@ -6419,6 +6419,7 @@ MonoBehaviour:
   continuousAlignment: 0
   anchorPositionOffset: {x: 0, y: 0, z: 0}
   anchorRotationOffsetEuler: {x: 0, y: 0, z: 0}
+  keepUpright: 1
   verboseLogging: 1
   restartIfNoDetectionAfterSeconds: 10
 --- !u!114 &1191223316

@@ -6416,12 +6416,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   expectedQrText: MRMuseum_BowlAnchor_01
-  continuousAlignment: 0
+  continuousAlignment: 1
   anchorPositionOffset: {x: 0, y: 0, z: 0}
   anchorRotationOffsetEuler: {x: 0, y: 0, z: 0}
   keepUpright: 1
+  placeInFrontOnStart: 1
   verboseLogging: 1
   restartIfNoDetectionAfterSeconds: 10
+  target: {fileID: 0}
 --- !u!114 &1191223316
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8072,7 +8074,8 @@ MonoBehaviour:
   overlayRenderers: []
   alwaysVisible: 1
   snapToAnchorCenter: 1
-  grabbable: 1
+  grabbable: 0
+  showDebugHud: 1
 --- !u!1 &1376180090
 GameObject:
   m_ObjectHideFlags: 0
@@ -11702,7 +11705,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!65 &2023568760
 BoxCollider:
   m_ObjectHideFlags: 0

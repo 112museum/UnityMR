@@ -7,8 +7,9 @@
 // TableAnchor.Instance.
 //
 // Usage: attach to an empty GameObject (e.g. "BowlAnchor") placed anywhere in
-// the scene — its transform gets overwritten once the QR is seen, so starting
-// position doesn't matter. Parent the overlay bowl instance (the one with
+// the scene. This object itself never moves (it hosts the marker rig); on Awake
+// the overlay bowl is moved under a runtime "BowlAnchorTarget", and that is what
+// gets placed onto the QR. Parent the overlay bowl instance (the one with
 // PhysicalBowlFilterOverlay on it) under this GameObject in the Editor, then
 // calibrate the overlay's local position/rotation/scale against the real bowl.
 using System;
@@ -43,7 +44,12 @@ public class BowlAnchorAligner : MonoBehaviour
     [Tooltip("On HoloLens, the OS-level QR watcher sometimes isn't ready yet the instant this component starts, so it silently misses every marker for the rest of the app session (the known workaround is quitting and relaunching the app). If no markersChanged event fires at all within this many seconds, the marker subsystem is restarted automatically to recover without a manual relaunch. Set to 0 to disable.")]
     [SerializeField] private float restartIfNoDetectionAfterSeconds = 10f;
 
+    [Tooltip("The transform that actually gets moved onto the QR. Leave empty: a runtime 'BowlAnchorTarget' is created and the overlay bowl(s) under this object are moved onto it. This object itself must NOT move — it carries the XROrigin/ARMarkerManager whose Trackables parent the detected markers live under, so moving it drags the markers along (the bowl ended up offset by wherever this object was parked, e.g. ~1m ahead and below the table).")]
+    [SerializeField] private Transform target;
+
     public bool IsAligned { get; private set; }
+    public Transform Target => target;
+    public Vector3? LastMarkerPosition { get; private set; }
     public event Action Aligned;
 
     private ARMarkerManager markerManager;
@@ -54,6 +60,16 @@ public class BowlAnchorAligner : MonoBehaviour
     private void Awake()
     {
         markerManager = GetComponent<ARMarkerManager>();
+
+        if (target == null)
+        {
+            target = new GameObject("BowlAnchorTarget").transform;
+            target.SetPositionAndRotation(transform.position, transform.rotation);
+            foreach (var overlay in GetComponentsInChildren<PhysicalBowlFilterOverlay>(includeInactive: true))
+            {
+                overlay.transform.SetParent(target, worldPositionStays: true);
+            }
+        }
 
         // Default (MostStable) puts the marker origin at the QR's corner; Center puts it at the
         // QR's geometric center, which is where the bowl should sit.
@@ -164,12 +180,16 @@ public class BowlAnchorAligner : MonoBehaviour
             return;
         }
 
-        var markerTransform = marker.transform;
-        var baseRotation = keepUpright ? UprightYaw(markerTransform) : markerTransform.rotation;
+        // marker.transform is already in world space, under this (now never-moving) rig's Trackables
+        // parent — same math as the build where the bowl landed on the phone correctly.
+        var markerPosition = marker.transform.position;
+        var markerRotation = marker.transform.rotation;
+        LastMarkerPosition = markerPosition;
+        var baseRotation = keepUpright ? UprightYaw(markerRotation) : markerRotation;
         var rotation = baseRotation * Quaternion.Euler(anchorRotationOffsetEuler);
-        var position = markerTransform.position + rotation * anchorPositionOffset;
+        var position = markerPosition + rotation * anchorPositionOffset;
 
-        transform.SetPositionAndRotation(position, rotation);
+        target.SetPositionAndRotation(position, rotation);
 
         if (!IsAligned)
         {
@@ -188,15 +208,15 @@ public class BowlAnchorAligner : MonoBehaviour
         var flatForward = Vector3.ProjectOnPlane(cam.transform.forward, Vector3.up);
         if (flatForward.sqrMagnitude < 1e-6f) flatForward = Vector3.forward;
         flatForward.Normalize();
-        transform.SetPositionAndRotation(cam.transform.position + flatForward * 1f + Vector3.down * 0.3f,
+        target.SetPositionAndRotation(cam.transform.position + flatForward * 1f + Vector3.down * 0.3f,
                                          Quaternion.LookRotation(flatForward, Vector3.up));
     }
 
     // Whichever of the marker's in-plane/normal axes is most horizontal gives the yaw; world up stays up.
-    private static Quaternion UprightYaw(Transform t)
+    private static Quaternion UprightYaw(Quaternion r)
     {
         var best = Vector3.zero;
-        foreach (var axis in new[] { t.forward, t.up, t.right })
+        foreach (var axis in new[] { r * Vector3.forward, r * Vector3.up, r * Vector3.right })
         {
             var flat = Vector3.ProjectOnPlane(axis, Vector3.up);
             if (flat.sqrMagnitude > best.sqrMagnitude) best = flat;

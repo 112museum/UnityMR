@@ -54,14 +54,21 @@ public class PhysicalBowlFilterOverlay : MonoBehaviour
         }
 
         // 溫碗 prefab 裡的模型帶了一個會受重力影響的 Rigidbody（給其他功能用的），疊放用的碗
-        // 一放手就會往下掉到地板，所以這裡全部改成 kinematic、不受重力。
+        // 一放手就會往下掉到地板。疊放的碗只是真碗的「影子」，不需要任何物理，所以 Rigidbody 和
+        // Collider 全部拿掉（先關重力，因為 Destroy 要到這一幀結束才生效）。
         foreach (var rb in GetComponentsInChildren<Rigidbody>(includeInactive: true))
         {
             rb.useGravity = false;
             rb.isKinematic = true;
+            Destroy(rb);
+        }
+        foreach (var col in GetComponentsInChildren<Collider>(includeInactive: true))
+        {
+            Destroy(col);
         }
 
-        anchorAligner = GetComponentInParent<BowlAnchorAligner>();
+        // BowlAnchorAligner 在 Awake 會把這個碗搬到執行時建立的 BowlAnchorTarget 底下，所以不能用 GetComponentInParent 找。
+        anchorAligner = FindObjectOfType<BowlAnchorAligner>();
         if (showDebugHud) CreateDebugHud();
 
         // 這兩步都要在 SetVisible 關掉 Renderer 之前做，關掉的 Renderer 抓不到正確外框。
@@ -122,10 +129,13 @@ public class PhysicalBowlFilterOverlay : MonoBehaviour
         if (TryGetWorldBounds(out var b))
         {
             var local = cam.transform.InverseTransformPoint(b.center);
-            where = $"bowl {local.magnitude:0.0}m  " +
-                    $"{(local.z >= 0 ? "front" : "BEHIND")} {Mathf.Abs(local.z):0.0} / " +
-                    $"{(local.x >= 0 ? "right" : "left")} {Mathf.Abs(local.x):0.0} / " +
-                    $"{(local.y >= 0 ? "up" : "down")} {Mathf.Abs(local.y):0.0}";
+            where = Describe("bowl", local);
+        }
+
+        // 同一個格式顯示 QR 本身的位置：QR 對、碗不對 → 碗擺放的問題；QR 就不對 → QR 位置的問題。
+        if (anchorAligner != null && anchorAligner.LastMarkerPosition.HasValue)
+        {
+            where += "\n" + Describe("QR", cam.transform.InverseTransformPoint(anchorAligner.LastMarkerPosition.Value));
         }
 
         int shown = 0;
@@ -137,6 +147,12 @@ public class PhysicalBowlFilterOverlay : MonoBehaviour
             $"   visible: {shown}/{overlayRenderers.Length}" +
             $"   filter: {(ColorBlindFilterToggle.Instance == null ? "MISSING" : (ColorBlindFilterToggle.Instance.IsFilterOn ? "on" : "off"))}";
     }
+
+    private static string Describe(string label, Vector3 local) =>
+        $"{label} {local.magnitude:0.0}m  " +
+        $"{(local.z >= 0 ? "front" : "BEHIND")} {Mathf.Abs(local.z):0.0} / " +
+        $"{(local.x >= 0 ? "right" : "left")} {Mathf.Abs(local.x):0.0} / " +
+        $"{(local.y >= 0 ? "up" : "down")} {Mathf.Abs(local.y):0.0}";
 
     private bool TryGetWorldBounds(out Bounds bounds)
     {

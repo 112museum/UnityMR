@@ -6288,10 +6288,10 @@ MonoBehaviour:
   currentStatus: 0
   currentLineIndex: 0
   allChapters:
-  - {fileID: 11400000, guid: 9967236f937e0004591776db30816ca6, type: 2}
-  - {fileID: 11400000, guid: 47c01137f39282547b9feeef520eb7ea, type: 2}
   - {fileID: 11400000, guid: 7af7a02738c6bf44397c856dde0f10d4, type: 2}
   - {fileID: 11400000, guid: f0c911ffa49e52342ac652f06ed8b71b, type: 2}
+  - {fileID: 11400000, guid: 9967236f937e0004591776db30816ca6, type: 2}
+  - {fileID: 11400000, guid: 47c01137f39282547b9feeef520eb7ea, type: 2}
   - {fileID: 11400000, guid: b551a668c8cd61448aba70150fca4b9c, type: 2}
   textManager: {fileID: 1423210959}
   talker: {fileID: 1423210960}
@@ -21564,10 +21564,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 1147649740051854652, guid: bb45df82ba657a845aea1b5aa230164f, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: bb45df82ba657a845aea1b5aa230164f, type: 3}
 --- !u!4 &1931479594 stripped
 Transform:

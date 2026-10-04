@@ -5641,6 +5641,8 @@ GameObject:
   - component: {fileID: 956438738}
   - component: {fileID: 956438737}
   - component: {fileID: 956438736}
+  - component: {fileID: 956438739}
+  - component: {fileID: 956438740}
   m_Layer: 0
   m_Name: ColorBlindSystem
   m_TagString: Untagged
@@ -5693,6 +5695,38 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &956438739
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 956438735}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faafd9950ad4ba0489d6d463059b7af6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  protanColor: {r: 0.6830188, g: 0.029640364, b: 0.46711984, a: 1}
+  deuteranColor: {r: 0.0042078425, g: 0.5827032, b: 0.7433963, a: 1}
+  tritanColor: {r: 0.7132075, g: 0.5581624, b: 0, a: 1}
+  maxAlpha: 0.401
+  edgeFade: 0.1
+  previewType: 1
+  distance: 2
+  alwaysVisible: 1
+--- !u!114 &956438740
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 956438735}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e6ad9298f6db7b4c83ecbc7e075fb6b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &970647230
 GameObject:
   m_ObjectHideFlags: 0
@@ -6402,7 +6436,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1191223315
 MonoBehaviour:
   m_ObjectHideFlags: 0

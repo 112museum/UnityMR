@@ -194,6 +194,15 @@ public class ColorVisionQRScanner : MonoBehaviour
         System.Array.Copy(_flipBuffer, pixels, pixels.Length);
     }
 
+    // 給 ColorVisionMarkerReader 用：眼鏡內建的 QR 讀碼器（比 ZXing 穩定很多）讀到代碼時，
+    // 走跟 ZXing 掃到一模一樣的流程（存結果、關攝影機、顯示「掃描完成」、觸發 onScanSuccess）。
+    public void ApplyCodeFromMarker(string code)
+    {
+        if (scanCompleted) return;
+        Debug.Log($"[ColorVisionQRScanner] 眼鏡內建讀碼器讀到：\"{code}\"");
+        TryApplyCode(code);
+    }
+
     private void TryApplyCode(string code)
     {
         if (ColorBlindFilterToggle.Instance == null)
@@ -210,7 +219,7 @@ public class ColorVisionQRScanner : MonoBehaviour
 
         scanCompleted = true;
 
-        if (backCam.isPlaying) backCam.Stop();
+        if (backCam != null && backCam.isPlaying) backCam.Stop();
 
         if (statusText != null)
         {

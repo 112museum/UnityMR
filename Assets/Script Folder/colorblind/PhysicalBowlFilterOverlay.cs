@@ -46,25 +46,33 @@ public class PhysicalBowlFilterOverlay : MonoBehaviour
     private BowlAnchorAligner anchorAligner;
     private float nextHudUpdate;
 
+    // 溫碗 prefab 是從虛擬展桌那邊來的，模型上帶著展桌用的腳本：TableAnchorAsParent（Start 時把碗
+    // 搬去虛擬展桌底下）、GenericNetSync（每幀把碗拉回在展桌上的位置）、ReturnToOriginal、
+    // XRGrabInteractable…… 這些都會把碗從 QR 上拉走。疊放的碗只是真碗的「影子」，只要被看見就好，
+    // 所以在 Awake（比任何 Start 都早）把它們全部停掉，物理也全部關掉。
+    // Rigidbody 不用 Destroy：XRGrabInteractable 依賴它，Unity 會拒絕刪除。
+    private void Awake()
+    {
+        foreach (var behaviour in GetComponentsInChildren<MonoBehaviour>(includeInactive: true))
+        {
+            if (behaviour != this) behaviour.enabled = false;
+        }
+        foreach (var rb in GetComponentsInChildren<Rigidbody>(includeInactive: true))
+        {
+            rb.useGravity = false;
+            rb.isKinematic = true;
+        }
+        foreach (var col in GetComponentsInChildren<Collider>(includeInactive: true))
+        {
+            col.enabled = false;
+        }
+    }
+
     private void Start()
     {
         if (overlayRenderers == null || overlayRenderers.Length == 0)
         {
             overlayRenderers = GetComponentsInChildren<Renderer>(includeInactive: true);
-        }
-
-        // 溫碗 prefab 裡的模型帶了一個會受重力影響的 Rigidbody（給其他功能用的），疊放用的碗
-        // 一放手就會往下掉到地板。疊放的碗只是真碗的「影子」，不需要任何物理，所以 Rigidbody 和
-        // Collider 全部拿掉（先關重力，因為 Destroy 要到這一幀結束才生效）。
-        foreach (var rb in GetComponentsInChildren<Rigidbody>(includeInactive: true))
-        {
-            rb.useGravity = false;
-            rb.isKinematic = true;
-            Destroy(rb);
-        }
-        foreach (var col in GetComponentsInChildren<Collider>(includeInactive: true))
-        {
-            Destroy(col);
         }
 
         // BowlAnchorAligner 在 Awake 會把這個碗搬到執行時建立的 BowlAnchorTarget 底下，所以不能用 GetComponentInParent 找。

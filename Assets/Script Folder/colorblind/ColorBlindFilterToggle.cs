@@ -28,6 +28,7 @@ public class ColorBlindFilterToggle : MonoBehaviour
     // 開/關的當下會發這個事件，讓那些物件知道現在該不該顯示，不用自己 polling isFilterOn。
     public event Action<bool> FilterStateChanged;
     public bool IsFilterOn => isFilterOn;
+    public ColorBlindType DetectedType => detectedType;
 
     [Header("要套用色弱濾鏡的物件（例如展品、調色盤）")]
     public Renderer[] targetRenderers;

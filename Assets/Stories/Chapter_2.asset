@@ -27,7 +27,6 @@ MonoBehaviour:
     taskTextPlayer2: 
     objectsToShow:
     - FreeChat_Button
-    - ColorBlindFilterOn
     objectsToHide: []
   - speakerName: "\u4E7E\u9686\u5E1D(\u611B\u65B0\u89BA\u7F85\xB7\u5F18\u66C6)"
     beats:

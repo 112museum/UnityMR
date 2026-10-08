@@ -9,9 +9,8 @@ using UnityEngine.UI;
 //
 // 類型不再讓玩家自己選——大部分色弱者其實不知道自己是哪個亞型。改成跟著學姊的流程走：
 // 玩家事先在外部評估網站做色覺測驗（Cambridge Color Vision Test 架構），測驗結果連同 QR code
-// 由 ColorVisionQRScanner 掃描解碼後呼叫 SetDetectedType() 存起來；接著在第二幕開場時由
-// ColorBlindChapterTrigger（訂閱 StoryModeManager.OnShowObjectTag）呼叫 ActivateFromChapter2()
-// 才真正套用濾鏡，並持續到體驗結束，除非玩家自己用 ManualToggle() 關掉。
+// 由 ColorVisionQRScanner 掃描解碼後呼叫 SetDetectedType() 存起來——掃到的當下就直接套用
+// 濾鏡，不用等到特定劇情節點，並持續到體驗結束，除非玩家自己用 ManualToggle() 關掉。
 public class ColorBlindFilterToggle : MonoBehaviour
 {
     public enum ColorBlindType
@@ -74,8 +73,8 @@ public class ColorBlindFilterToggle : MonoBehaviour
         }
     }
 
-    // 掛給 ColorVisionQRScanner：QR 解碼出玩家的色覺類型與程度後呼叫這個存起來。
-    // 只是記錄，不會馬上套濾鏡——濾鏡要等第二幕開場（ActivateFromChapter2）才開。
+    // 掛給 ColorVisionQRScanner：QR 解碼出玩家的色覺類型與程度後呼叫這個存起來，並且直接
+    // 套用濾鏡——不再延後到特定劇情節點才開。色覺正常（QR 代碼 A）不套用濾鏡。
     // severity 對應學姊原本 QRScanner 解出來的 level 字串："severe"/"moderate"/"mild"。
     public void SetDetectedType(ColorBlindType type, string severity)
     {
@@ -90,7 +89,15 @@ public class ColorBlindFilterToggle : MonoBehaviour
             _ => intensity,
         };
 
-        Debug.Log($"[ColorBlindFilterToggle] 測驗結果：{detectedType} / {severity}（尚未套用，等第二幕開場）");
+        Debug.Log($"[ColorBlindFilterToggle] 測驗結果：{detectedType} / {severity}");
+
+        if (type == ColorBlindType.Normal)
+        {
+            Debug.Log("[ColorBlindFilterToggle] 色覺正常，不套用濾鏡。");
+            return;
+        }
+
+        ActivateFilter();
     }
 
     // Button.OnClick() 的下拉選單只列得出回傳 void 的方法，ApplyCode 為了讓呼叫端能判斷
@@ -183,30 +190,6 @@ public class ColorBlindFilterToggle : MonoBehaviour
         img.color = tinted;
     }
 
-    // 掛給 ColorBlindChapterTrigger：第二幕開場的 tag 觸發時呼叫。
-    // 玩家測出來是 Normal（QR 代碼 A）或根本沒掃過 QR 的話，不套濾鏡。
-    public void ActivateFromChapter2()
-    {
-        if (isFilterOn)
-        {
-            Debug.Log("[ColorBlindFilterToggle] ActivateFromChapter2() 被呼叫，但濾鏡已經是開啟狀態，略過。");
-            return;
-        }
-
-        if (!hasDetectedType || detectedType == ColorBlindType.Normal)
-        {
-            Debug.Log($"[ColorBlindFilterToggle] ActivateFromChapter2() 被呼叫，但沒有套用濾鏡（hasDetectedType={hasDetectedType}, detectedType={detectedType}）。");
-            return;
-        }
-
-        CacheMaterials();
-        ApplyMultipliers();
-        ApplyToTargets(true);
-        isFilterOn = true;
-        FilterStateChanged?.Invoke(true);
-        Debug.Log($"[ColorBlindFilterToggle] 濾鏡已套用：type={detectedType}, intensity={intensity}, targets={targetRenderers?.Length ?? 0}");
-    }
-
     // 舊名稱別名——Assets/Scenes/張/Rose Seman.unity 裡已經有顆按鈕的 On Click() 綁的是
     // ToggleFilter()，保留這個名字避免那顆按鈕失效。新的地方請直接綁 ManualToggle()。
     public void ToggleFilter() => ManualToggle();
@@ -229,11 +212,19 @@ public class ColorBlindFilterToggle : MonoBehaviour
             return;
         }
 
+        ActivateFilter();
+    }
+
+    // SetDetectedType（掃到 QR 當下）跟 ManualToggle（玩家重新打開）共用的「真正套用濾鏡」
+    // 邏輯：重新抓一次目前的材質/顏色快取、算好倍率、套到所有目標物件上。
+    private void ActivateFilter()
+    {
         CacheMaterials();
         ApplyMultipliers();
         ApplyToTargets(true);
         isFilterOn = true;
         FilterStateChanged?.Invoke(true);
+        Debug.Log($"[ColorBlindFilterToggle] 濾鏡已套用：type={detectedType}, intensity={intensity}, targets={targetRenderers?.Length ?? 0}");
     }
 
     // 幫每個目標物件各自準備一份「濾鏡材質」，保留該物件「目前」的貼圖/顏色(_MainTex)，

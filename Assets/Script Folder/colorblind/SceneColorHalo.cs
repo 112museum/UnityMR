@@ -1,20 +1,22 @@
 using UnityEngine;
 
-// 在玩家眼前蓋一層跟著頭走的半透明色彩薄膜，取代「疊在真碗上的虛擬碗」（碗的對位不準也不穩定）。
-// HoloLens 是透明鏡片、只能加光，所以這層薄膜是「在整個視野上加一層淡淡的顏色」，沒辦法像真的
-// 有色眼鏡那樣擋掉某種顏色的光——顏色和透明度都在 Inspector 調，太濃畫面會整個泛色。
+// 色弱濾鏡的「整畫面調色」那一半：原本（HeadLockedColorFilm）是跟著頭走、蓋滿整個視野的
+// 2D 薄膜，現在改成釘在場景裡一個固定座標的 3D 半透明光暈，mesh 直接沿用碗的形狀
+// （Assets/Chinese Exhibits/635.obj 的 mmGroup0），而不是整個畫面都加一層色。掛在場景裡
+// 想讓光暈出現的那個位置的 GameObject 上即可，光暈會以這個物件的原點為中心生成，
+// 不會再去抓 Camera.main 的位置。
 //
 // 顏色跟濃淡沿用色覺測驗 QR 的同一個代碼（例如 "B2"），跟虛擬物件的濾鏡一致：
 //   字母 → 顏色：取現有濾鏡（ColorBlindFilterToggle.GetMultipliers）加強的那兩個通道——
 //     B 紅色弱 加強紅+藍 = 洋紅、C 綠色弱 加強綠+藍 = 青、D 藍色弱 加強紅+綠 = 黃。
 //   數字 → 濃淡：跟著 intensity（1 重度 1.5 / 2 中度 1.3 / 3 輕度 1.15）走，重度最濃。
 //
-// 用法：掛在場景裡任何一直存在的物件上（例如有 ColorBlindFilterToggle 的那個物件）。
-// 薄膜跟著 ColorBlindFilterToggle 的濾鏡一起開關；玩家沒辦法跟它互動（沒有 Collider、
-// 放在 Ignore Raycast 圖層，MRTK 的手部射線會直接穿過去）。
-public class HeadLockedColorFilm : MonoBehaviour
+// 用法：掛在場景裡「光暈該出現的那個固定位置」的 GameObject 上（不需要是 Camera 或任何
+// 一直存在的物件，只要位置是你要的就好）。光暈跟著 ColorBlindFilterToggle 的濾鏡一起開關；
+// 玩家沒辦法跟它互動（沒有 Collider、放在 Ignore Raycast 圖層，MRTK 的手部射線會直接穿過去）。
+public class SceneColorHalo : MonoBehaviour
 {
-    [Header("各色弱類型的薄膜顏色（A 透明度不用調，由下面的 Max Alpha 和程度決定）")]
+    [Header("各色弱類型的光暈顏色（A 透明度不用調，由下面的 Max Alpha 和程度決定）")]
     [SerializeField] private Color protanColor = new Color(1f, 0.55f, 0.85f);   // B 紅色弱：柔和洋紅
     [SerializeField] private Color deuteranColor = new Color(0.55f, 0.9f, 1f);  // C 綠色弱：柔和青
     [SerializeField] private Color tritanColor = new Color(1f, 0.9f, 0.55f);    // D 藍色弱：柔和黃
@@ -23,54 +25,59 @@ public class HeadLockedColorFilm : MonoBehaviour
     [Range(0f, 1f)]
     [SerializeField] private float maxAlpha = 0.4f;
 
-    [Tooltip("視野最外圈多寬的範圍往外變淡（0 = 不淡、邊緣很明顯；0.1 = 最外面一成）。中間整片濃淡一致。")]
-    [Range(0f, 0.5f)]
-    [SerializeField] private float edgeFade = 0.1f;
+    [Tooltip("光暈邊緣的柔化範圍（0~1）。數值愈大，正對鏡頭的核心愈小、愈像一顆柔邊發光的碗；" +
+             "愈接近 0，整個碗的輪廓邊界愈死硬。Mesh 表面每一點到物體中心的距離不是固定值，" +
+             "但碗這種凹凸起伏的形狀用「離中心多遠」淡出會很不均勻，所以這裡改用視線跟表面" +
+             "法線的夾角（Fresnel）來決定淡出程度，不管 mesh 形狀長怎樣效果都一致。")]
+    [Range(0.01f, 1f)]
+    [SerializeField] private float edgeSoftness = 0.4f;
+
+    [Tooltip("光暈用的 Mesh，從 Assets/Chinese Exhibits/635.obj 底下的 mmGroup0 子物件拖進來" +
+             "（Project 視窗展開 635.obj 即可看到）。")]
+    [SerializeField] private Mesh bowlMesh;
+
+    [Tooltip("套在 bowlMesh 原始大小上的縮放倍率（直接對應生成物件的 localScale），" +
+             "(1,1,1) 代表維持 mesh 原本的大小。")]
+    [SerializeField] private Vector3 scale = Vector3.one;
 
     [Tooltip("Always Visible 測試時、還沒掃測驗 QR 的情況下用哪一種類型的顏色。")]
     [SerializeField] private ColorBlindFilterToggle.ColorBlindType previewType = ColorBlindFilterToggle.ColorBlindType.Protanomalous;
 
-    [Tooltip("薄膜離眼睛多遠（公尺）。shader 一律畫在最上層，所以不管虛擬物件多近都會被染到色。" +
-             "HoloLens 2 的對焦距離約 2 公尺，放太近（例如 0.5）眼睛會一直想對焦，戴久了不舒服。")]
-    [SerializeField] private float distance = 2f;
-
     [Tooltip("勾起來的話不管濾鏡有沒有開都顯示（測試用）。正式流程要取消勾選。")]
     [SerializeField] private bool alwaysVisible = false;
 
-    private Renderer filmRenderer;
-    private Material filmMaterial;
+    private Renderer haloRenderer;
+    private Material haloMaterial;
+    private bool isNormalColor;
 
     private void Start()
     {
-        var cam = Camera.main;
-        if (cam == null)
-        {
-            Debug.LogError("[HeadLockedColorFilm] 找不到 Main Camera，無法建立色彩薄膜。");
-            return;
-        }
-
-        var shader = Shader.Find("Custom/ColorFilm");
+        var shader = Shader.Find("Custom/ColorHalo");
         if (shader == null)
         {
-            Debug.LogError("[HeadLockedColorFilm] 找不到 Custom/ColorFilm shader。");
+            Debug.LogError("[SceneColorHalo] 找不到 Custom/ColorHalo shader。");
             return;
         }
 
-        var film = GameObject.CreatePrimitive(PrimitiveType.Quad);
-        film.name = "ColorFilm";
-        Destroy(film.GetComponent<Collider>());
-        film.layer = 2; // Ignore Raycast
-        film.transform.SetParent(cam.transform, false);
-        film.transform.localPosition = new Vector3(0f, 0f, distance);
-        film.transform.localRotation = Quaternion.identity;
-        // 蓋滿整個視野還多留一些（HoloLens 2 視角約 43°×29°）。
-        film.transform.localScale = new Vector3(distance * 3f, distance * 3f, 1f);
+        if (bowlMesh == null)
+        {
+            Debug.LogError("[SceneColorHalo] 沒有指定 bowlMesh，光暈不會顯示任何東西。");
+            return;
+        }
 
-        filmMaterial = new Material(shader);
-        filmRenderer = film.GetComponent<Renderer>();
-        filmRenderer.sharedMaterial = filmMaterial;
-        filmRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-        filmRenderer.receiveShadows = false;
+        var halo = new GameObject("ColorHalo");
+        halo.layer = 2; // Ignore Raycast
+        halo.transform.SetParent(transform, false);
+        halo.transform.localPosition = Vector3.zero;
+        halo.transform.localRotation = Quaternion.identity;
+        halo.transform.localScale = scale;
+        halo.AddComponent<MeshFilter>().sharedMesh = bowlMesh;
+
+        haloMaterial = new Material(shader);
+        haloRenderer = halo.AddComponent<MeshRenderer>();
+        haloRenderer.sharedMaterial = haloMaterial;
+        haloRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        haloRenderer.receiveShadows = false;
 
         var toggle = ColorBlindFilterToggle.Instance;
         if (toggle != null)
@@ -80,7 +87,7 @@ public class HeadLockedColorFilm : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[HeadLockedColorFilm] 場景裡找不到 ColorBlindFilterToggle，薄膜只會依 alwaysVisible 顯示。");
+            Debug.LogWarning("[SceneColorHalo] 場景裡找不到 ColorBlindFilterToggle，光暈只會依 alwaysVisible 顯示。");
             SetVisible(false);
         }
     }
@@ -90,22 +97,23 @@ public class HeadLockedColorFilm : MonoBehaviour
 
     private void Update()
     {
-        // 掃測驗 QR 只會把結果存起來，濾鏡要等第二幕開場才打開——但薄膜顯示著的時候（例如
+        // 掃測驗 QR 只會把結果存起來，濾鏡要等第二幕開場才打開——但光暈顯示著的時候（例如
         // Always Visible 測試）測驗結果一變就要馬上換色，不能只靠 FilterStateChanged。
         var toggle = ColorBlindFilterToggle.Instance;
-        if (filmMaterial == null || toggle == null) return;
+        if (haloMaterial == null || toggle == null) return;
         if (toggle.DetectedType == lastType && Mathf.Approximately(toggle.intensity, lastIntensity)) return;
 
         lastType = toggle.DetectedType;
         lastIntensity = toggle.intensity;
         UpdateColor();
-        Debug.Log($"[HeadLockedColorFilm] 測驗結果變成 {lastType}（intensity {lastIntensity}），薄膜顏色 {filmMaterial.color}");
+        Debug.Log($"[SceneColorHalo] 測驗結果變成 {lastType}（intensity {lastIntensity}），光暈顏色 {haloMaterial.color}");
     }
 
     private void OnValidate()
     {
         // 在 Play 模式裡調 Inspector 的顏色可以馬上看到效果。
-        if (filmMaterial != null) UpdateColor();
+        if (haloMaterial != null) UpdateColor();
+        if (haloRenderer != null) haloRenderer.transform.localScale = scale;
     }
 
     private void OnDestroy()
@@ -114,14 +122,15 @@ public class HeadLockedColorFilm : MonoBehaviour
         {
             ColorBlindFilterToggle.Instance.FilterStateChanged -= SetVisible;
         }
-        if (filmMaterial != null) Destroy(filmMaterial);
+        if (haloMaterial != null) Destroy(haloMaterial);
     }
 
     private void SetVisible(bool on)
     {
-        if (filmRenderer == null) return;
+        if (haloRenderer == null) return;
         UpdateColor(); // 濾鏡打開的當下測驗結果已經確定，這時候換成對應的顏色
-        filmRenderer.enabled = on || alwaysVisible;
+        // 色覺正常不需要套用任何濾鏡，不管 on/alwaysVisible 怎麼說都強制隱形。
+        haloRenderer.enabled = !isNormalColor && (on || alwaysVisible);
     }
 
     private void UpdateColor()
@@ -130,6 +139,10 @@ public class HeadLockedColorFilm : MonoBehaviour
         var type = toggle != null && toggle.DetectedType != ColorBlindFilterToggle.ColorBlindType.Normal
             ? toggle.DetectedType
             : previewType;
+
+        isNormalColor = type == ColorBlindFilterToggle.ColorBlindType.Normal;
+        if (isNormalColor) return; // 不用算顏色/透明度，SetVisible 會把 renderer 關掉
+
         float intensity = toggle != null ? toggle.intensity : 1.5f;
 
         var color = type switch
@@ -141,8 +154,8 @@ public class HeadLockedColorFilm : MonoBehaviour
         };
         // intensity 1.15 / 1.3 / 1.5 → 濃淡 0.3 / 0.6 / 1.0 倍的 maxAlpha
         color.a = maxAlpha * Mathf.Clamp01((intensity - 1f) / 0.5f);
-        filmMaterial.color = color;
-        filmMaterial.SetFloat("_EdgeFade", edgeFade);
+        haloMaterial.color = color;
+        haloMaterial.SetFloat("_EdgeSoftness", edgeSoftness);
     }
 
     // 在 Editor 按 Play 後，對 Inspector 上這個元件按右鍵（或右上角 ⋮）就能模擬掃到測驗 QR，
@@ -157,7 +170,7 @@ public class HeadLockedColorFilm : MonoBehaviour
     {
         if (!Application.isPlaying || ColorBlindFilterToggle.Instance == null)
         {
-            Debug.LogWarning("[HeadLockedColorFilm] 要先按 Play 才能模擬掃 QR。");
+            Debug.LogWarning("[SceneColorHalo] 要先按 Play 才能模擬掃 QR。");
             return;
         }
         ColorBlindFilterToggle.Instance.ApplyCode(code);

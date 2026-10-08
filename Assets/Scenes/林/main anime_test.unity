@@ -11611,7 +11611,7 @@ GameObject:
   - component: {fileID: 1086737505}
   - component: {fileID: 1086737504}
   m_Layer: 0
-  m_Name: ColorBlindSystem (1)
+  m_Name: ColorBlindSystem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11645,10 +11645,11 @@ MonoBehaviour:
   deuteranColor: {r: 0.0042078425, g: 0.5827032, b: 0.7433963, a: 1}
   tritanColor: {r: 0.7132075, g: 0.5581624, b: 0, a: 1}
   maxAlpha: 0.401
-  edgeFade: 0
+  edgeSoftness: 0.4
+  bowlMesh: {fileID: -6691176145451151428, guid: 964938aced093204e8e58e3c0e754698, type: 3}
+  scale: {x: 0.008, y: 0.008, z: 0.008}
   previewType: 0
-  distance: 2
-  alwaysVisible: 1
+  alwaysVisible: 0
 --- !u!114 &1086737506
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11662,8 +11663,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetRenderers:
-  - {fileID: 0}
-  targetImages: []
+  - {fileID: 1552888827}
+  - {fileID: 3236361}
+  - {fileID: 1324453983}
+  - {fileID: 1774599489}
+  - {fileID: 1239704417}
+  - {fileID: 1556219950}
+  targetImages:
+  - {fileID: 2103421557}
+  - {fileID: 321122254}
+  - {fileID: 2095269065}
+  - {fileID: 1931293600}
+  - {fileID: 1819444221}
+  - {fileID: 1254833749}
+  - {fileID: 277310028}
+  - {fileID: 1870897556}
+  - {fileID: 971096708}
   colorBlindShader: {fileID: 0}
   intensity: 1.3
 --- !u!114 &1086737507
@@ -11688,7 +11703,7 @@ Transform:
   m_GameObject: {fileID: 1086737503}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 2.63, y: 1.26, z: 0.78}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -15485,7 +15500,7 @@ PrefabInstance:
     - target: {fileID: 1078126367784990753, guid: bf2a1b15162a4c340ac6e8675ff387c2, type: 3}
       propertyPath: <OnClicked>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 1858927493}
+      objectReference: {fileID: 1086737506}
     - target: {fileID: 1078126367784990753, guid: bf2a1b15162a4c340ac6e8675ff387c2, type: 3}
       propertyPath: <OnClicked>k__BackingField.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
       value: 2
@@ -21426,7 +21441,7 @@ GameObject:
   - component: {fileID: 1858927494}
   - component: {fileID: 1858927493}
   m_Layer: 0
-  m_Name: ColorBlindSystem
+  m_Name: ColorBlindSystem_old
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

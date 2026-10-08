@@ -35,6 +35,5 @@ MonoBehaviour:
     requiresInteraction: 0
     taskTextPlayer1: 
     taskTextPlayer2: 
-    objectsToShow:
-    - ColorBlindFilterOn
+    objectsToShow: []
     objectsToHide: []

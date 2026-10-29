@@ -334,6 +334,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 04fe51e62dfce2642adbc7875550777c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  maxDistanceFromOriginal: 30
 --- !u!114 &-7277061893212958404
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -349,7 +350,7 @@ MonoBehaviour:
   m_InteractionManager: {fileID: 0}
   m_Colliders: []
   m_InteractionLayers:
-    m_Bits: 1
+    m_Bits: 5
   m_DistanceCalculationMode: 1
   m_SelectMode: 0
   m_FocusMode: 1
@@ -503,6 +504,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cdf4d00bd418f04b9ec53b66c8db6a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  liquidTag: GlazeLiquid
 --- !u!4 &1786629564329861706 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 964938aced093204e8e58e3c0e754698, type: 3}

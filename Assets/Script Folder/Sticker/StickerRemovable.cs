@@ -11,8 +11,8 @@ using UnityEngine.XR.Interaction.Toolkit;
 //   - 打不到、或離表面太遠 → 代表玩家是真的要把它從碗上拔掉，才觸發移除。
 // 這樣不管在碗的哪個位置放開都能持續調整，不會因為離「當初貼上去那個點」有點距離就被誤判成要拔掉，
 // 也不會因為在碗表面上滑一下就彈回原本那個死點。
-// 移除是透過 RPC 請 MasterClient 執行 PhotonNetwork.Destroy——MasterClient 對場上任何網路物件都有
-// 刪除權限，不受 ownership 限制，這樣不管是誰貼的貼紙，房間裡任何一個玩家都能把它拔掉。
+// 移除：PhotonNetwork.Destroy 只有該物件的擁有者（IsMine）能執行，MasterClient 並沒有特權。
+// 所以自己貼的直接刪；別人貼的就廣播 RPC，由擁有者那台執行刪除，這樣房間裡任何玩家都能拔掉任何貼紙。
 [RequireComponent(typeof(ObjectManipulator))]
 public class StickerRemovable : MonoBehaviourPun
 {
@@ -42,7 +42,15 @@ public class StickerRemovable : MonoBehaviourPun
 
         if (bowlCollider == null || !TryRepositionOnSurface(bowlCollider))
         {
-            photonView.RPC(nameof(RequestDestroy), RpcTarget.MasterClient);
+            if (photonView.IsMine)
+            {
+                PhotonNetwork.Destroy(gameObject);
+            }
+            else
+            {
+                // 不是自己貼的貼紙：廣播給所有人，由真正擁有它的那台（IsMine）負責刪除。
+                photonView.RPC(nameof(RequestDestroy), RpcTarget.Others);
+            }
         }
     }
 
@@ -69,8 +77,10 @@ public class StickerRemovable : MonoBehaviourPun
     [PunRPC]
     private void RequestDestroy()
     {
-        // 只有 MasterClient 會執行到這裡；MasterClient 可以刪除場上任何網路物件，
-        // 不管原本是哪個玩家貼上去的都能拔掉。
+        // PhotonNetwork.Destroy 只有 IsMine 的那台能執行（MasterClient 也不例外，
+        // 除非原擁有者已離開房間，這時 PUN 會讓 MasterClient 的 IsMine 變成 true）。
+        // 其他收到 RPC 的玩家直接忽略，等擁有者刪除後由 Photon 同步移除。
+        if (!photonView.IsMine) return;
         PhotonNetwork.Destroy(gameObject);
     }
 }
